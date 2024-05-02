@@ -1,0 +1,189 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  hash  String
+  salt  String
+
+  cars Car[]
+  favoire Favorite[]
+  bids  Bid[]
+  notifications Notification[]
+  reviews       Review[]
+
+  soldDeals Deal[] @relation("SellerRelation")
+  boughtDeals Deal[] @relation("BuyerRelation")
+}
+
+model Notification {
+  id    Int     @id @default(autoincrement())
+  title String
+  description String
+
+  userId Int @map("user_id")
+  user User @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+  status NotificationStatus  @default(NOT_READING)
+}
+
+model Car {
+  id            Int          @id @default(autoincrement()) 
+  vin           String       @unique
+  year          Int
+  mileage       Int
+  color         String
+  engine        String
+  photos        String[]
+  sellerId      Int          @map("seller_id")
+  owner         User         @relation(fields: [sellerId], references: [id])
+  generationId  Int          @map("generation_id")
+  generation    Generation   @relation(fields: [generationId], references: [id])
+  descriptionId Int   @unique
+  description   Description  @relation(fields: [descriptionId], references: [id])
+
+  auction       Auction?
+}
+
+model Description {
+  id            Int          @id @default(autoincrement()) 
+  title         String   
+  description   String
+
+  Car Car?
+}
+
+
+model Auction {
+  id         Int      @id @default(autoincrement())
+  carId      Int      @map("car_id") @unique
+  car        Car      @relation(fields: [carId], references: [id])
+  dateStart  DateTime @map("date_start")
+  dateEnd    DateTime @map("date_end")
+  startPrice Int?     @map("start_price") @default(0)
+  offer      Boolean? @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+  status     AuctionStatus @default(IN_PROGRESS)
+  favorite   Favorite[]
+  bid        Bid[]
+  deal       Deal?
+}
+
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  
+  auctionId Int      @map("auction_id")
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  
+  @@unique([userId, auctionId])
+}
+
+model Bid {
+  id         Int      @id @default(autoincrement())
+  amount     Float
+
+  bidder     User     @relation(fields: [userId], references: [id]) // Связь с пользователем (многие к одному)
+  userId     Int      @map("user_id")
+
+  auction    Auction  @relation(fields: [auctionId], references: [id]) // Связь с аукционом (многие к одному)
+  auctionId  Int      @map("auction_id")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+}
+
+model Make {
+  id        Int      @id @default(autoincrement())
+  makeName  String   @unique @map("make_name")
+
+  models    Model[] 
+}
+
+model Model {
+  id      Int    @id @default(autoincrement())
+  makeId  Int    @map("make_id")
+  make    Make   @relation(fields: [makeId], references: [id]) 
+
+  modelName  String   @map("model_name")
+  generation Generation[]
+}
+
+model Generation {
+  id        Int      @id @default(autoincrement())
+  modelId   Int      @map("model_id")
+  model     Model    @relation(fields: [modelId], references: [id])
+  image     String
+  generationName String @map("generation_name")
+  generationYear Int @map("generation_year")
+  Cars      Car[]
+}
+
+model Deal {
+  id        Int      @id @default(autoincrement())
+
+  auctionId Int      @unique @map("auction_id")
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+
+  sellerId   Int      @map("seller_id")
+  seller     User     @relation("SellerRelation", fields: [sellerId], references: [id])
+
+  buyerId    Int      @map("buyer_id")
+  buyer      User     @relation("BuyerRelation", fields: [buyerId], references: [id])
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  paymentAt DateTime? @map("payment_at")
+  confirmedAt  DateTime? @map("confirmed_at")
+  
+  
+  status     DealStatus @default(CREATED)
+
+  review Review?
+  
+//  review_id     Int?
+//   reviews       Review[]   @relation("DealReviews")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+
+  dealId    Int      @unique @map("review_id")
+  deal      Deal     @relation(fields: [dealId], references: [id])
+
+  reviwerId Int      @map("reviewr_id")
+  reviewr   User     @relation(fields: [reviwerId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+  rating    Int   
+  title     String     
+  description String
+
+}
+
+enum AuctionStatus {
+  NOT_PLAYED
+  PLAYED
+  CANCELLED
+  IN_PROGRESS
+}
+enum NotificationStatus {
+  READING
+  NOT_READING
+}
+
+enum DealStatus {
+  CREATED
+  PAID
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
