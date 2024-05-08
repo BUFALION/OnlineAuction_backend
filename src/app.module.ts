@@ -17,11 +17,21 @@ import { NotificationModule } from './notification/notification.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DealModule } from './deal/deal.module';
 import { ReviewModule } from './review/review.module';
+import { CompanyModule } from './company/company.module';
+import { TokenModule } from './token/token.module';
+import { EmailModule } from './email/email.module';
+import { ConfigModule } from '@nestjs/config';  
+import { PaymentStripeModule } from './payment-stripe/payment-stripe.module';
+import configs from './config';
 
 @Module({
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+
+  ],
   imports: [
+    PaymentStripeModule,
     AuthModule,
     UserModule,
     DbModule,
@@ -35,11 +45,18 @@ import { ReviewModule } from './review/review.module';
     DescriptionModule,
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot({
-      global: true
+      global: true,
     }),
     NotificationModule,
     DealModule,
-    ReviewModule
+    ReviewModule,
+    CompanyModule,
+    TokenModule,
+    EmailModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configs],
+    }),
     
   ],
 })

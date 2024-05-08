@@ -14,7 +14,9 @@ model User {
   hash  String
   salt  String
 
-  cars Car[]
+  firstName String @map("first_name")
+  secondName String @map("second_name")
+
   favoire Favorite[]
   bids  Bid[]
   notifications Notification[]
@@ -22,6 +24,36 @@ model User {
 
   soldDeals Deal[] @relation("SellerRelation")
   boughtDeals Deal[] @relation("BuyerRelation")
+
+  companyId Int? 
+  company   Company? @relation("CompanyParticipant", fields: [companyId], references: [id])
+
+  createdCompany Company? @relation("CompanyCreator")
+
+  // @@unique([companyId], name: "user_unique_company")
+}
+
+model Company {
+  id Int     @id @default(autoincrement())
+  companyName String @map("company_name")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  creatorId Int @unique @map("creator_id")
+  creator User @relation("CompanyCreator", fields: [creatorId], references: [id])
+
+  participants User[] @relation("CompanyParticipant")
+  token InvitationToken[]
+  cars Car[]
+}
+
+model InvitationToken {
+  token      String @id @default(uuid())
+  createdAt  DateTime @default(now()) @map("created_at")
+  companyId  Int   
+  email      String  
+  company    Company @relation(fields: [companyId], references: [id])
+
+  @@map("invitation_token")
 }
 
 model Notification {
@@ -43,8 +75,8 @@ model Car {
   color         String
   engine        String
   photos        String[]
-  sellerId      Int          @map("seller_id")
-  owner         User         @relation(fields: [sellerId], references: [id])
+  companyId      Int          @map("company_id")
+  company       Company      @relation(fields: [companyId], references: [id])
   generationId  Int          @map("generation_id")
   generation    Generation   @relation(fields: [generationId], references: [id])
   descriptionId Int   @unique
@@ -145,14 +177,29 @@ model Deal {
   paymentAt DateTime? @map("payment_at")
   confirmedAt  DateTime? @map("confirmed_at")
   
-  
   status     DealStatus @default(CREATED)
 
+  price      Int       @default(100)
+
+
   review Review?
+  payment   Payment?
   
 //  review_id     Int?
 //   reviews       Review[]   @relation("DealReviews")
 }
+
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  
+  url       String   @unique
+  dealId    Int      @unique @map("review_id")
+  deal      Deal     @relation(fields: [dealId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  status    PaymentStatus @default(PENDING)
+}
+
 
 model Review {
   id        Int      @id @default(autoincrement())
@@ -186,4 +233,11 @@ enum DealStatus {
   CONFIRMED
   COMPLETED
   CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }

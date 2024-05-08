@@ -1,14 +1,24 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
-import { DealStateMachine, dealMachine } from './deal-state-machine';
+import { dealMachine } from './deal-state-machine';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { DealDto } from './dto/deal.dto';
+import { StateMachine } from 'src/shared/state-machine/state-machine';
+import { DealStatus } from '@prisma/client';
+import { PaymentStripeService } from 'src/payment-stripe/payment-stripe.service';
+
 
 @Injectable()
 export class DealService {
+
+  private stateMachine: StateMachine<DealStatus>;
+
   constructor(
     private readonly db: DbService,
-  ) {}
+    private readonly paymentStripe: PaymentStripeService
+  ) {
+    this.stateMachine = new StateMachine(dealMachine);
+  }
 
   async findById(id: number) {
     const deal = await this.db.deal.findUnique({
@@ -25,14 +35,34 @@ export class DealService {
     return this.db.deal.findMany();
   }
 
-//   async changeStatus(id: number, event: string) {
-//     const deal = await this.findById(id);
+  async changeStatus(id: number, event: string) {
+    const deal = await this.findById(id);
 
-//     const currentState = deal.status.toLowerCase();
+    const currentState = deal.status;
 
-//     const newState = this.dealStateMachine.transition(event);
-//     const new
-//   }
+    const state = this.stateMachine.transition(currentState, event)
+
+    if(!state){
+      throw new BadRequestException(
+        `Invalid action "${event}" for state "${currentState}". Check the allowed transitions.`
+      );
+    }
+    return await this.db.deal.update({
+      where: {
+        id: deal.id
+      },
+      data: {
+        status: state
+      }
+    })
+
+    // const service = interpret(dealMachine).start();
+
+    // // dealMachine.transition(deal.status.toLowerCase(), {type: event})
+    // service.transition(deal.status.toLowerCase(),{ type: event });
+
+
+  }
 
   async create(createDealDto: CreateDealDto): Promise<DealDto> {
 
@@ -52,6 +82,8 @@ export class DealService {
       },
     });
     
+    this.paymentStripe.createCheck(deal.id,deal.price)
+
     return deal
   }
 

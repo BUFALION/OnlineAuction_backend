@@ -13,8 +13,9 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { NotificationService } from 'src/notification/notification.service';
 import { PaginatorTypes, paginator } from '@nodeteam/nestjs-prisma-pagination';
-import { promises } from 'dns';
 import { PaginatedOutputDto } from 'src/shared/dto/pagination.dto';
+import { DealService } from 'src/deal/deal.service';
+
 
 const paginate: PaginatorTypes.PaginateFunction = paginator({ perPage: 10 });
 
@@ -27,16 +28,18 @@ export class AuctionService {
     private readonly carService: CarService,
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly notificationService: NotificationService,
+    private readonly dealService: DealService,
+
   ) {}
 
   async create(
     createAuctionDto: CreateAuctionDto,
     carId: number,
-    sellerId: number,
+    companyId: number,
   ) {
     const car = await this.carService.getCarById(carId);
 
-    if (car.sellerId !== sellerId) {
+    if (car.companyId !== companyId) {
       throw new UnauthorizedException(
         'You are not authorized to create an auction for this car.',
       );
@@ -44,6 +47,10 @@ export class AuctionService {
 
     if (createAuctionDto.dateEnd <= createAuctionDto.dateStart) {
       throw new BadRequestException('End date must be greater than start date');
+    }
+
+    if (createAuctionDto.dateStart < new Date()) {
+      throw new BadRequestException('Start date must be in the future');
     }
 
     const auction = await this.db.auction.create({
@@ -55,11 +62,28 @@ export class AuctionService {
       },
     });
 
-    this.createAuctionCron(auction, sellerId);
+    this.createAuctionCron(auction, companyId);
     return auction;
   }
+
+  async findAuctionsByComapnyId(companyId: number) {
+    return await this.db.auction.findMany({
+      where: {
+        car: {
+          companyId,
+        },
+      },
+      include: {
+        car: true,
+      },
+    });
+  }
+
   //TODO CAN I REFACTORING THIS
-  async findAll(page: number, perPage: number): Promise<PaginatedOutputDto<AuctionDto>> {
+  async findAll(
+    page: number,
+    perPage: number,
+  ): Promise<PaginatedOutputDto<AuctionDto>> {
     return await paginate(
       this.db.auction,
       {},
@@ -110,7 +134,7 @@ export class AuctionService {
     return auctions;
   }
 
-  createAuctionCron(auctin: AuctionDto, sellerId: number) {
+  createAuctionCron(auctin: AuctionDto, companyId: number) {
     const cronName = `auction-${auctin.id}`;
 
     const job = new CronJob(auctin.dateEnd, async () => {
@@ -119,6 +143,14 @@ export class AuctionService {
         where: { auctionId: auctin.id },
         orderBy: { amount: 'desc' },
       });
+
+      const deal = await this.dealService.create({
+        auctionId: auctin.id,
+        sellerId: 1,
+        buyerId: bid.userId,
+      });
+
+
       if (bid) {
         await this.notificationService.create(
           {
@@ -132,7 +164,7 @@ export class AuctionService {
             title: `Ваш аукцион был сыгран ${bid.auctionId}`,
             description: `Выигрышная ставка : ${bid.amount}`,
           },
-          sellerId,
+          companyId,
         );
       } else {
         await this.notificationService.create(
@@ -140,7 +172,7 @@ export class AuctionService {
             title: `Ваш аукцион не был сыгран ${bid.auctionId}`,
             description: `Никто не сделал ставку`,
           },
-          sellerId,
+          companyId,
         );
       }
     });

@@ -1,69 +1,34 @@
-import { Injectable } from '@nestjs/common';
-import { AnyEventObject, createActor, createMachine,  } from 'xstate';
 
-@Injectable()
-export class DealStateMachine {
-  private machine = createMachine({
-    id: 'deal',
-    initial: 'created',
-    states: {
-      created: {
-        on: {
-          APPROVE: 'approved',
-        },
-      },
-      approved: {
-        on: {
-          PAY: 'paid',
-          CANCEL: 'cancelled',
-        },
-      },
-      paid: {
-        on: {
-          COMPLETE: 'completed',
-          
-        },
-      },
-      cancelled: {},
-      completed: {},
-    },
-  });
-  private readonly actor = createActor(this.machine);
+import { DealStatus } from '@prisma/client';
 
-  constructor() {
-    this.actor.start();
-  }
-
-  get currentState() {
-    return this.actor.getSnapshot();
-  }
-
-  transition(action: string) {
-    this.actor.send({type: action});
-  }
-}
-
-export const dealMachine = createMachine({
+export const dealMachine = {
   id: 'deal',
-  initial: 'created',
+  initial: DealStatus.CREATED,
   states: {
-    created: {
+    [DealStatus.CREATED]: {
       on: {
-        APPROVE: 'approved',
+        CONFIRMED: DealStatus.CONFIRMED,
       },
     },
-    approved: {
+    [DealStatus.CONFIRMED]: {
       on: {
-        PAY: 'paid',
-        CANCEL: 'cancelled',
+        PAID: DealStatus.PAID,
+        CANCELLED: DealStatus.CANCELLED,
       },
     },
-    paid: {
+    [DealStatus.PAID]: {
       on: {
-        COMPLETE: 'completed',
+        COMPLETED: DealStatus.COMPLETED,
       },
     },
-    cancelled: {},
-    completed: {},
+    [DealStatus.CANCELLED]: {
+      on: {}, 
+    },
+    [DealStatus.COMPLETED]: {
+      on: {}, 
+    },
   },
-});
+};
+
+
+

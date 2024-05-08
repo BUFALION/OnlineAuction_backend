@@ -41,7 +41,7 @@ export class AuthService {
             throw new UnauthorizedException()
         }
         
-        const accessToken = await this.jwtService.signAsync({ id:user.id, email: user.email })
+        const accessToken = await this.jwtService.signAsync({ id:user.id, email: user.email, companyId: user.companyId })
 
         return { accessToken };
 

@@ -4,11 +4,11 @@ import { AuctionController } from './auction.controller';
 import { DbModule } from 'src/db/db.module';
 import { CarModule } from 'src/car/car.module';
 import { HttpModule } from '@nestjs/axios';
-import { BidModule } from 'src/bid/bid.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { DealModule } from 'src/deal/deal.module';
 
 @Module({
-  imports: [DbModule, CarModule, HttpModule,NotificationModule],
+  imports: [DbModule, CarModule, HttpModule,NotificationModule, DealModule],
   providers: [AuctionService],
   controllers: [AuctionController],
   exports: [AuctionService]

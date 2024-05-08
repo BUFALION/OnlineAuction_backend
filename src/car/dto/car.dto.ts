@@ -4,7 +4,7 @@ export class CarDto {
     @ApiProperty()
     id: number
     @ApiProperty()
-    sellerId: number
+    companyId: number
     @ApiProperty()
     descriptionId: number
     @ApiProperty()

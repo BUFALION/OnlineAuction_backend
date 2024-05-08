@@ -20,8 +20,11 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@golevelup/nestjs-stripe": "^0.6.4",
+    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/axios": "^3.0.2",
     "@nestjs/common": "^10.3.7",
+    "@nestjs/config": "^3.1.1",
     "@nestjs/core": "^10.0.0",
     "@nestjs/event-emitter": "^2.0.4",
     "@nestjs/jwt": "^10.2.0",
@@ -38,10 +41,12 @@
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "ejs": "^3.1.10",
     "prisma-pagination": "^0.2.3",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "socket.io": "^4.7.5",
+    "stripe": "^11.12.0",
     "xstate": "^5.12.0"
   },
   "devDependencies": {

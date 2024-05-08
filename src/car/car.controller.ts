@@ -18,13 +18,14 @@ import { CarService } from './car.service';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { SessionInfo } from 'src/auth/session-info.decorator';
 import { GetSessionDto } from 'src/auth/dto/get-session.dto';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CarDto } from './dto/car.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { FilesUploadDto } from 'src/shared/dto/files-upload.dto';
+import { CompanyMemeberGuard } from 'src/company/guards/company-memeber/company-memeber.guard';
 
 @Controller('car')
-
+@ApiTags('cars')
 export class CarController {
   constructor(private readonly carService: CarService) {}
 
@@ -37,14 +38,14 @@ export class CarController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('seller/:sellerId')
+  @Get('company/:companyId')
   @ApiOkResponse({
     type: [CarDto],
   })
-  async getCarBySellerId(
-    @Param('sellerId', ParseIntPipe) sellerId: number,
+  async getCarByCompanyId(
+    @Param('companyId', ParseIntPipe) companyId: number,
   ): Promise<CarDto[]> {
-    return await this.carService.getCarBySellerId(sellerId);
+    return await this.carService.getCarByCompanyId(companyId);
   }
 
   @Get(':carId')
@@ -55,16 +56,16 @@ export class CarController {
     return await this.carService.getCarById(carId);
   }
 
-  @UseGuards(AuthGuard)
-  @Post('')
+  @UseGuards(AuthGuard,CompanyMemeberGuard)
+  @Post('company/:companyId')
   @ApiOkResponse({
     type: CarDto,
   })
   async createCar(
     @Body() body: CreateCarDto,
-    @SessionInfo() session: GetSessionDto,
+    @Param('companyId', ParseIntPipe) companyId: number
   ) {
-    return await this.carService.createCar(body, session.id);
+    return await this.carService.createCar(body, companyId);
   }
 
   @UseGuards(AuthGuard)

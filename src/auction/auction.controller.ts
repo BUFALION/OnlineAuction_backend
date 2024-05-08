@@ -19,6 +19,7 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiProperty,
+  ApiTags,
 } from '@nestjs/swagger';
 import { AuctionDto } from './dto/auction.dto';
 import { ApiPaginatedResponse } from 'src/shared/decorators/api-paginated-response/api-paginated-response.decorator';
@@ -26,25 +27,32 @@ import { PaginatedOutputDto } from 'src/shared/dto/pagination.dto';
 import { createPaginator } from 'prisma-pagination';
 import { Prisma } from '@prisma/client';
 import { DbService } from 'src/db/db.service';
+import { CompanyMemeberGuard } from 'src/company/guards/company-memeber/company-memeber.guard';
 
 @Controller('auction')
+@ApiTags('auctions')
 export class AuctionController {
-  constructor(
-    private readonly auctionService: AuctionService,
-    private readonly prisma: DbService,
-  ) {}
+  constructor(private readonly auctionService: AuctionService) {}
 
-  @UseGuards(AuthGuard)
-  @Post(':carId')
+  @UseGuards(AuthGuard, CompanyMemeberGuard)
+  @Post('company/:companyId/:carId')
   @ApiCreatedResponse({
     type: AuctionDto,
   })
   async createAuction(
     @Body() body: CreateAuctionDto,
     @Param('carId', ParseIntPipe) carId: number,
-    @SessionInfo() session: GetSessionDto,
+    @Param('companyId', ParseIntPipe) companyId: number,
   ): Promise<AuctionDto> {
-    return await this.auctionService.create(body, carId, session.id);
+    return await this.auctionService.create(body, carId, companyId);
+  }
+
+  @ApiOkResponse({
+    type: [AuctionDto]
+  })
+  @Get('company/:companyId')
+  async findAuctionsByComapnyId(@Param('companyId', ParseIntPipe) companyId: number){
+    return await this.auctionService.findAuctionsByComapnyId(companyId)
   }
 
   @UseGuards(AuthGuard)

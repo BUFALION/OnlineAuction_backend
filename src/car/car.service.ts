@@ -22,26 +22,25 @@ export class CarService {
     return car;
   }
 
-  async getCarBySellerId(sellerId: number): Promise<CarDto[]> {
+  async getCarByCompanyId(companyId: number): Promise<CarDto[]> {
     const cars = await this.db.car.findMany({
       where: {
-        sellerId: sellerId,
+        companyId: companyId,
       },
     });
     return cars;
    
-
   }
 
   async getCars() {
     return await this.db.car.findMany();
   }
 
-  async createCar(carCreateDto: CreateCarDto, sellerId: number) {
+  async createCar(carCreateDto: CreateCarDto, companyId: number) {
     return await this.db.car.create({
       data: {
         ...carCreateDto,
-        sellerId: sellerId
+        companyId: companyId
         
       },
     });
@@ -49,9 +48,11 @@ export class CarService {
   updateCar() {}
   deleteCar() {}
 
-  async isCarOwner(carId: number, sellerId: number): Promise<boolean> {
+
+
+  async isCarOwner(carId: number, companyId: number): Promise<boolean> {
     const car = await this.getCarById(carId);
-    return car.sellerId === sellerId;
+    return car.companyId === companyId;
   }
 
   async uploadPhotos(carId: number, photos: Array<Express.Multer.File>) {

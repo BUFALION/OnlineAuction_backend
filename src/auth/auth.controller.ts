@@ -49,7 +49,7 @@ export class AuthController {
       body.email,
       body.password,
     );
-
+    
     this.cookieService.setToken(res, accessToken);
   }
 
