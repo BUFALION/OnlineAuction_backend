@@ -12,6 +12,7 @@ import {
   FileTypeValidator,
   MaxFileSizeValidator,
   ParseFilePipe,
+  Logger,
 } from '@nestjs/common';
 import { CreateCarDto } from './dto/create-car.dto';
 import { CarService } from './car.service';
@@ -27,6 +28,8 @@ import { CompanyMemeberGuard } from 'src/company/guards/company-memeber/company-
 @Controller('car')
 @ApiTags('cars')
 export class CarController {
+  private readonly logger = new Logger(CarController.name);
+
   constructor(private readonly carService: CarService) {}
 
   @Get()
@@ -74,13 +77,13 @@ export class CarController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'List of car images',
-    type: FilesUploadDto ,
+    type: FilesUploadDto,
   })
   async uploadPhotos(
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
-          new FileTypeValidator({fileType: '.(png|jpeg|jpg)'}),
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 4 }),
         ],
       })
@@ -88,6 +91,16 @@ export class CarController {
     files: Array<Express.Multer.File>,
     @Param('carId', ParseIntPipe) carId: number
   ) {
-    return this.carService.uploadPhotos(carId,files)
+    this.logger.log(`Uploading photos for car ID: ${carId}`);
+    this.logger.log(`Number of files received: ${files.length}`);
+    try {
+      const result = await this.carService.uploadPhotos(carId, files);
+      this.logger.log(`Upload successful for car ID: ${carId}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to upload photos for car ID: ${carId}`, error.stack);
+      throw error;
+    }
   }
 }
+
