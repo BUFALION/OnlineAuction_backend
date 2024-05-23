@@ -37,6 +37,7 @@ model Company {
   id Int     @id @default(autoincrement())
   companyName String @map("company_name")
   createdAt  DateTime @default(now()) @map("created_at")
+  imageUrl String    @map("image_url")
 
   creatorId Int @unique @map("creator_id")
   creator User @relation("CompanyCreator", fields: [creatorId], references: [id])
