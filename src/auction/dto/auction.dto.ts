@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { AuctionStatus } from "@prisma/client";
 import { IsOptional } from "class-validator";
+import { CarDto } from "src/car/dto/car.dto";
 
 export class AuctionDto {
   @ApiProperty()
@@ -28,4 +29,6 @@ export class AuctionDto {
 
   @ApiProperty({ enum: AuctionStatus })
   status: AuctionStatus;
+
+  car?: CarDto
 }

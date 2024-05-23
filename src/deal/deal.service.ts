@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
 import { dealMachine } from './deal-state-machine';
 import { CreateDealDto } from './dto/create-deal.dto';
@@ -7,15 +12,13 @@ import { StateMachine } from 'src/shared/state-machine/state-machine';
 import { DealStatus } from '@prisma/client';
 import { PaymentStripeService } from 'src/payment-stripe/payment-stripe.service';
 
-
 @Injectable()
 export class DealService {
-
   private stateMachine: StateMachine<DealStatus>;
 
   constructor(
     private readonly db: DbService,
-    private readonly paymentStripe: PaymentStripeService
+    private readonly paymentStripe: PaymentStripeService,
   ) {
     this.stateMachine = new StateMachine(dealMachine);
   }
@@ -31,7 +34,7 @@ export class DealService {
     return deal;
   }
 
-  async findAllDeals(){
+  async findAllDeals() {
     return this.db.deal.findMany();
   }
 
@@ -40,67 +43,72 @@ export class DealService {
 
     const currentState = deal.status;
 
-    const state = this.stateMachine.transition(currentState, event)
+    const state = this.stateMachine.transition(currentState, event);
 
-    if(!state){
+    if (!state) {
       throw new BadRequestException(
-        `Invalid action "${event}" for state "${currentState}". Check the allowed transitions.`
+        `Invalid action "${event}" for state "${currentState}". Check the allowed transitions.`,
       );
     }
     return await this.db.deal.update({
       where: {
-        id: deal.id
+        id: deal.id,
       },
       data: {
-        status: state
-      }
-    })
-
-    // const service = interpret(dealMachine).start();
-
-    // // dealMachine.transition(deal.status.toLowerCase(), {type: event})
-    // service.transition(deal.status.toLowerCase(),{ type: event });
-
-
+        status: state,
+      },
+    });
   }
 
   async create(createDealDto: CreateDealDto): Promise<DealDto> {
-
     const existingDeal = await this.db.deal.findUnique({
       where: {
-        auctionId: createDealDto.auctionId
+        auctionId: createDealDto.auctionId,
       },
     });
 
     if (existingDeal) {
-      throw new ConflictException(`A deal with auctionId ${createDealDto.auctionId} already exists.`);
+      throw new ConflictException(
+        `A deal with auctionId ${createDealDto.auctionId} already exists.`,
+      );
     }
-    
-    const deal =  await this.db.deal.create({
+
+    const deal = await this.db.deal.create({
       data: {
-        ...createDealDto
+        ...createDealDto,
       },
     });
-    
-    this.paymentStripe.createCheck(deal.id,deal.price)
 
-    return deal
+    this.paymentStripe.createCheck(deal.id, deal.price);
+
+    return deal;
   }
 
   async findByBuyerId(buyerId: number) {
     return this.db.deal.findMany({
-      where:{
-        buyerId: buyerId
+      where: {
+        buyerId: buyerId,
+      },
+      include: {
+        payment: true
       }
-    })
+    });
   }
 
-  async findBySellerId(sellerId: number){
+  async findBySellerId(companyId: number) {
     return await this.db.deal.findMany({
       where: {
-        sellerId: sellerId
+        companyId: companyId,
+      },
+      include: {
+        payment: true,
+        buyer: true,
+        auction: {
+          include: {
+            car: true
+          }
+        }
       }
-    })
+    });
   }
-
 }

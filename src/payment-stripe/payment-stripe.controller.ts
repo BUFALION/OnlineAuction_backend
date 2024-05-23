@@ -1,8 +1,12 @@
 import { InjectStripeClient } from '@golevelup/nestjs-stripe';
-import { Controller, Get, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { PaymentStripeService } from './payment-stripe.service';
+import { AuthGuard } from 'src/auth/guard/auth.guard';
+import { SessionInfo } from 'src/auth/session-info.decorator';
+import { GetSessionDto } from 'src/auth/dto/get-session.dto';
+import { PaymentDto } from './dto/payment.dto';
 
 @ApiTags('payment')
 @Controller('payment-stripe')
@@ -16,6 +20,20 @@ export class PaymentStripeController {
       return await this.paymentStripeService.getAllPayments();
     } 
 
+    @UseGuards(AuthGuard)
+    @ApiOkResponse({
+      type: [PaymentDto]
+  })
+    @Get('user')
+    async getAllUserPayment(@SessionInfo() session: GetSessionDto){
+      return this.paymentStripeService.getUserPayments(session.id)
+    }
+    
+
+    @Get('deal/:dealId')
+    async GetPaymentByDealId(@Param('dealId', ParseIntPipe) dealId: number){
+      return this.paymentStripeService.getPaymentByDealId(dealId)
+    }
 
     // @Post() 
     // async test() {

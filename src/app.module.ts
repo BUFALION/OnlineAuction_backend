@@ -23,6 +23,7 @@ import { EmailModule } from './email/email.module';
 import { ConfigModule } from '@nestjs/config';  
 import { PaymentStripeModule } from './payment-stripe/payment-stripe.module';
 import configs from './config';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   controllers: [AppController],
@@ -44,6 +45,7 @@ import configs from './config';
     GenerationModule,
     DescriptionModule,
     ScheduleModule.forRoot(),
+    CacheModule.register({ isGlobal: true }),
     EventEmitterModule.forRoot({
       global: true,
     }),

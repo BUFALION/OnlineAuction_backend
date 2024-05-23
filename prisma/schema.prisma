@@ -22,7 +22,7 @@ model User {
   notifications Notification[]
   reviews       Review[]
 
-  soldDeals Deal[] @relation("SellerRelation")
+
   boughtDeals Deal[] @relation("BuyerRelation")
 
   companyId Int? 
@@ -44,6 +44,7 @@ model Company {
   participants User[] @relation("CompanyParticipant")
   token InvitationToken[]
   cars Car[]
+  soldDeals Deal[]
 }
 
 model InvitationToken {
@@ -65,6 +66,7 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
   createdAt  DateTime @default(now()) @map("created_at")
   status NotificationStatus  @default(NOT_READING)
+  statusInfo NotificationInfo 
 }
 
 model Car {
@@ -75,7 +77,7 @@ model Car {
   color         String
   engine        String
   photos        String[]
-  companyId      Int          @map("company_id")
+  companyId     Int          @map("company_id")
   company       Company      @relation(fields: [companyId], references: [id])
   generationId  Int          @map("generation_id")
   generation    Generation   @relation(fields: [generationId], references: [id])
@@ -103,7 +105,7 @@ model Auction {
   startPrice Int?     @map("start_price") @default(0)
   offer      Boolean? @default(false)
   createdAt  DateTime @default(now()) @map("created_at")
-  status     AuctionStatus @default(IN_PROGRESS)
+  status     AuctionStatus @default(NOT_PLAYED)
   favorite   Favorite[]
   bid        Bid[]
   deal       Deal?
@@ -167,8 +169,8 @@ model Deal {
   auctionId Int      @unique @map("auction_id")
   auction   Auction  @relation(fields: [auctionId], references: [id])
 
-  sellerId   Int      @map("seller_id")
-  seller     User     @relation("SellerRelation", fields: [sellerId], references: [id])
+  companyId   Int      @map("company_id")
+  company     Company  @relation(fields: [companyId], references: [id])
 
   buyerId    Int      @map("buyer_id")
   buyer      User     @relation("BuyerRelation", fields: [buyerId], references: [id])
@@ -179,7 +181,7 @@ model Deal {
   
   status     DealStatus @default(CREATED)
 
-  price      Int       @default(100)
+  price      Int       
 
 
   review Review?
@@ -225,6 +227,13 @@ enum AuctionStatus {
 enum NotificationStatus {
   READING
   NOT_READING
+}
+
+enum NotificationInfo {
+  WARNING
+  ERROR
+  SUCCESS
+  NEUTRAL
 }
 
 enum DealStatus {

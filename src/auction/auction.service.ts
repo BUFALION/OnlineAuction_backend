@@ -15,13 +15,22 @@ import { NotificationService } from 'src/notification/notification.service';
 import { PaginatorTypes, paginator } from '@nodeteam/nestjs-prisma-pagination';
 import { PaginatedOutputDto } from 'src/shared/dto/pagination.dto';
 import { DealService } from 'src/deal/deal.service';
-
+import { StateMachine } from 'src/shared/state-machine/state-machine';
+import { AuctionStatus, NotificationInfo } from '@prisma/client';
+import { auctionMachine } from './auction-state-machine';
 
 const paginate: PaginatorTypes.PaginateFunction = paginator({ perPage: 10 });
+
+export type AuctionFilter = {
+  yearRange?: [number, number] | number[];
+  makeId?: number;
+  modelId?: number;
+};
 
 @Injectable()
 export class AuctionService {
   private readonly logger = new Logger(AuctionService.name);
+  private stateMachine: StateMachine<AuctionStatus>;
 
   constructor(
     private readonly db: DbService,
@@ -29,8 +38,9 @@ export class AuctionService {
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly notificationService: NotificationService,
     private readonly dealService: DealService,
-
-  ) {}
+  ) {
+    this.stateMachine = new StateMachine(auctionMachine);
+  }
 
   async create(
     createAuctionDto: CreateAuctionDto,
@@ -83,17 +93,98 @@ export class AuctionService {
   async findAll(
     page: number,
     perPage: number,
+    filter: AuctionFilter,
   ): Promise<PaginatedOutputDto<AuctionDto>> {
+    const { yearRange, makeId, modelId } = filter;
     return await paginate(
       this.db.auction,
-      {},
+      {
+        where: {
+          car: {
+            generation: {
+              model: {
+                makeId: +makeId || undefined, // Use undefined to ignore the filter if makeId is not provided
+                id: +modelId || undefined, // Use undefined to ignore the filter if modelId is not provided
+              },
+            },
+            AND: [
+              yearRange[0] && { year: { gte: yearRange[0] } },
+              yearRange[1] && { year: { lte: yearRange[1] } },
+            ].filter(Boolean),
+          },
+        },
+        orderBy: [
+          { car: { year: 'asc' } }, // Sort by car year in ascending order
+          { car: { generation: { model: { make: { makeName: 'asc' } } } } }, // Then by make name
+          { car: { generation: { model: { modelName: 'asc' } } } }, // Then by model name
+          { car: { generation: { generationYear: 'asc' } } }, // Then by generation year
+        ],
+        include: {
+          car: {
+            include: {
+              generation: {
+                include: {
+                  model: {
+                    include: {
+                      make: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       {
         page,
         perPage,
       },
     );
+  }
 
-    // return await this.db.auction.findMany();
+  async getSortedAuctions(filter: AuctionFilter) {
+    const { yearRange, makeId, modelId } = filter;
+    const auctions = await this.db.auction.findMany({
+      where: {
+        car: {
+          generation: {
+            model: {
+              makeId: +makeId || undefined, // Use undefined to ignore the filter if makeId is not provided
+              id: +modelId || undefined, // Use undefined to ignore the filter if modelId is not provided
+            },
+          },
+          AND: [
+            yearRange && { year: { gte: yearRange[0] } },
+            yearRange && { year: { lte: yearRange[1] } },
+            //  { year: { gte: 1700 } },
+            //  { year: { lte: 200000 } },
+          ].filter(Boolean),
+        },
+      },
+      orderBy: [
+        { createdAt: 'asc' },
+        // { car: { year: 'asc' } }, // Sort by car year in ascending order
+        // { car: { generation: { model: { make: { makeName: 'asc' } } } } }, // Then by make name
+        // { car: { generation: { model: { modelName: 'asc' } } } }, // Then by model name
+        // { car: { generation: { generationYear: 'asc' } } }, // Then by generation year
+      ],
+      include: {
+        car: {
+          include: {
+            generation: {
+              include: {
+                model: {
+                  include: {
+                    make: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    return auctions;
   }
 
   async findById(auctionId: number) {
@@ -144,33 +235,39 @@ export class AuctionService {
         orderBy: { amount: 'desc' },
       });
 
-      const deal = await this.dealService.create({
-        auctionId: auctin.id,
-        sellerId: 1,
-        buyerId: bid.userId,
-      });
-
-
       if (bid) {
+        this.changeStatus(auctin.id, AuctionStatus.PLAYED);
         await this.notificationService.create(
           {
             title: `Вы выйграли аукцион ${bid.auctionId}`,
             description: `Ваша ставка: ${bid.amount}`,
+            statusInfo: NotificationInfo.SUCCESS,
           },
           bid.userId,
         );
+
         await this.notificationService.create(
           {
-            title: `Ваш аукцион был сыгран ${bid.auctionId}`,
+            title: `Ваш аукцион был сыгран ${auctin.id}`,
             description: `Выигрышная ставка : ${bid.amount}`,
+            statusInfo: NotificationInfo.SUCCESS,
           },
           companyId,
         );
+
+        await this.dealService.create({
+          auctionId: auctin.id,
+          companyId: companyId,
+          buyerId: bid.userId,
+          price: bid.amount,
+        });
       } else {
+        this.changeStatus(auctin.id, AuctionStatus.CANCELLED);
         await this.notificationService.create(
           {
-            title: `Ваш аукцион не был сыгран ${bid.auctionId}`,
+            title: `Ваш аукцион не был сыгран ${auctin.id}`,
             description: `Никто не сделал ставку`,
+            statusInfo: NotificationInfo.ERROR,
           },
           companyId,
         );
@@ -180,6 +277,7 @@ export class AuctionService {
     this.schedulerRegistry.addCronJob(cronName, job);
 
     job.start();
+    this.changeStatus(auctin.id, AuctionStatus.IN_PROGRESS);
     this.logger.log(`Created cron for auction with ID ${auctin.id}`);
   }
 
@@ -196,5 +294,26 @@ export class AuctionService {
 
   test() {
     console.log('test');
+  }
+  async changeStatus(id: number, event: string) {
+    const auctin = await this.findById(id);
+
+    const currentState = auctin.status;
+
+    const state = this.stateMachine.transition(currentState, event);
+
+    if (!state) {
+      throw new BadRequestException(
+        `Invalid action "${event}" for state "${currentState}". Check the allowed transitions.`,
+      );
+    }
+    return await this.db.auction.update({
+      where: {
+        id: auctin.id,
+      },
+      data: {
+        status: state,
+      },
+    });
   }
 }

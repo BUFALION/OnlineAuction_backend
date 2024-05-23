@@ -1,5 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DealStatus } from '@prisma/client';
+import { AuctionDto } from 'src/auction/dto/auction.dto';
+import { PaymentDto } from 'src/payment-stripe/dto/payment.dto';
 
 export class DealDto {
   @ApiProperty()
@@ -7,7 +9,7 @@ export class DealDto {
   @ApiProperty()
   auctionId: number;
   @ApiProperty()
-  sellerId: number;
+  companyId: number;
   @ApiProperty()
   buyerId: number;
   @ApiProperty()
@@ -18,4 +20,12 @@ export class DealDto {
   confirmedAt?: Date;
   @ApiProperty({ enum: DealStatus })
   status: DealStatus;
+
+  @ApiProperty({
+    description: 'Payment details (optional)',
+    required: false,
+    type: PaymentDto,
+  })
+  payment?: PaymentDto;
+  Auction?: AuctionDto
 }

@@ -14,6 +14,22 @@ export class PaymentStripeService {
     return await this.db.payment.findMany()
   }
 
+  async getUserPayments(id: number) {
+    return await this.db.payment.findMany({
+      where:{
+        deal:{
+          buyerId: id
+        }
+        
+      },
+      include:{
+        deal: true,
+        
+       
+      }
+    })
+  } 
+
   async getPaymentByDealId(dealId: number) {
     const payment = await this.db.payment.findUnique({where:{
       dealId: dealId
@@ -38,9 +54,10 @@ export class PaymentStripeService {
         },
       ],
       mode: 'payment',
-      payment_intent_data: {
-        metadata: { dealId: dealId.toString() },
+      metadata: {
+        dealId: dealId.toString()
       },
+     
       success_url: 'http://locahost:3000/good',
       cancel_url: 'http://locahost:3000/bad',
     });

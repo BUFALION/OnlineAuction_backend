@@ -2,7 +2,7 @@ import * as process from 'process';
 const configs = () => ({
   NODE_ENV: process.env.NODE_ENV || 'development',
   GLOBAL: {
-    PORT: process.env.PORT || 3000,
+    PORT: process.env.PORT || '3000',
   },
   STRIPE_CONFIG: {
     apiKey: 'sk_test_51PE5L8BWs0njoW7wq3HhZnsDbFFQ99yI5kIco4W1PBoCqarYXSLzJq0QrwZAFtiHDrV0dBBiitqYvyDSwAdPKriD00MPaRKhOn',

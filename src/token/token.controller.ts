@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
 import { CreateTokenDto } from './dto/create-token.dto';
-import { ApiProperty, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { TokenDto } from './dto/token.dto';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { TokenService } from './token.service';
@@ -11,6 +11,14 @@ import { TokenService } from './token.service';
 export class TokenController {
 
     constructor(private readonly tokenService: TokenService) {}
+
+    @ApiOkResponse({
+        type: TokenDto
+    })
+    @Get(':token')
+    async findTokenByUuid(@Param('token') token: string) {
+        return this.tokenService.findTokenById(token)
+    }
 
     @UseGuards(AuthGuard)
     @ApiProperty({

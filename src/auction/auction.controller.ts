@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -19,13 +20,14 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiProperty,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { AuctionDto } from './dto/auction.dto';
 import { ApiPaginatedResponse } from 'src/shared/decorators/api-paginated-response/api-paginated-response.decorator';
 import { PaginatedOutputDto } from 'src/shared/dto/pagination.dto';
 import { createPaginator } from 'prisma-pagination';
-import { Prisma } from '@prisma/client';
+import { AuctionStatus, Prisma } from '@prisma/client';
 import { DbService } from 'src/db/db.service';
 import { CompanyMemeberGuard } from 'src/company/guards/company-memeber/company-memeber.guard';
 
@@ -48,11 +50,13 @@ export class AuctionController {
   }
 
   @ApiOkResponse({
-    type: [AuctionDto]
+    type: [AuctionDto],
   })
   @Get('company/:companyId')
-  async findAuctionsByComapnyId(@Param('companyId', ParseIntPipe) companyId: number){
-    return await this.auctionService.findAuctionsByComapnyId(companyId)
+  async findAuctionsByComapnyId(
+    @Param('companyId', ParseIntPipe) companyId: number,
+  ) {
+    return await this.auctionService.findAuctionsByComapnyId(companyId);
   }
 
   @UseGuards(AuthGuard)
@@ -71,13 +75,32 @@ export class AuctionController {
 
   @Get()
   @ApiPaginatedResponse(AuctionDto)
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'perPage', required: false })
+  @ApiQuery({ name: 'minYear', description: 'Minimum year in the range', required: false })
+  @ApiQuery({ name: 'maxYear', description: 'Maximum year in the range', required: false })
+  @ApiQuery({ name: 'makeId', description: 'Make ID', required: false })
+  @ApiQuery({ name: 'modelId', description: 'Model ID', required: false })
   async getAuctions(
     @Query('page') page: number = 1,
     @Query('perPage') perPage: number = 10,
+    @Query('minYear') minYear?: number, 
+    @Query('maxYear') maxYear?: number,
+    @Query('makeId') makeId?: number,
+    @Query('modelId') modelId?: number,
   ): Promise<PaginatedOutputDto<AuctionDto>> {
-    return await this.auctionService.findAll(page, perPage);
+    const yearRange = [+minYear, +maxYear];
+    return await this.auctionService.findAll(page, perPage, {yearRange , makeId, modelId });
   }
-
+  @Get('test')
+  async getSortedAuctions(    
+  @Query('minYear') minYear?: number, 
+  @Query('maxYear') maxYear?: number,
+  @Query('makeId') makeId?: number,
+  @Query('modelId') modelId?: number) {
+    const yearRange = [minYear, maxYear];
+    return this.auctionService.getSortedAuctions({yearRange , makeId, modelId });
+  }
   @Get(':auctionId')
   @ApiOkResponse({
     type: [AuctionDto],
@@ -86,5 +109,42 @@ export class AuctionController {
     @Param('auctionId', ParseIntPipe) carId: number,
   ): Promise<AuctionDto> {
     return await this.auctionService.findById(carId);
+  }
+
+
+  @UseGuards(AuthGuard)
+  @Put(':id/cancel')
+  @ApiOkResponse({
+      type: AuctionDto
+  })
+  async cancelAuction(@Param('id', ParseIntPipe) id: number ){
+      return await this.auctionService.changeStatus(id,AuctionStatus.CANCELLED)
+  }
+
+  @UseGuards(AuthGuard)
+  @Put(':id/played')
+  @ApiOkResponse({
+      type: AuctionDto
+  })
+  async playedAuction(@Param('id', ParseIntPipe) id: number ){
+    return await this.auctionService.changeStatus(id,AuctionStatus.PLAYED)
+  }
+
+  @UseGuards(AuthGuard)
+  @Put(':id/notplayed')
+  @ApiOkResponse({
+      type: AuctionDto
+  })
+  async notPlayedAuction(@Param('id', ParseIntPipe) id: number ){
+    return await this.auctionService.changeStatus(id,AuctionStatus.NOT_PLAYED)
+  }
+
+  @UseGuards(AuthGuard)
+  @Put(':id/inprogress')
+  @ApiOkResponse({
+      type: AuctionDto
+  })
+  async inProgrssAuction(@Param('id', ParseIntPipe) id: number ){
+    return await this.auctionService.changeStatus(id,AuctionStatus.IN_PROGRESS)
   }
 }

@@ -18,6 +18,9 @@ import { BidCreateWsDto } from './dto/bid-create-ws.dto';
 import { BidCreateResponseWsDto } from './dto/bid-create-response-ws.dto';
 import { AuctionService } from 'src/auction/auction.service';
 import { NotificationService } from 'src/notification/notification.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { BidDto } from 'src/bid/dto/bid.dto';
+import { NotificationInfo } from '@prisma/client';
 
 @WebSocketGateway({
   cors: {
@@ -34,10 +37,12 @@ export class BidGateway implements OnGatewayInit {
     private readonly bidService: BidService,
     private readonly auctionService: AuctionService,
     private readonly notificationService: NotificationService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   afterInit() {
     this.logger.log('Initialized');
+    this.listenEvent();
   }
 
   @UseGuards(AuthGuardWs)
@@ -69,6 +74,7 @@ export class BidGateway implements OnGatewayInit {
     @MessageBody() bidCreateWsDto: BidCreateWsDto,
     @SessionInfoWs() session: GetSessionDto,
   ) {
+
     if (!client.rooms.has(bidCreateWsDto.auctionId.toString())) {
       return client.emit('auctionError', {
         error: 'Необходимо сначала подписаться на аукцион',
@@ -89,24 +95,32 @@ export class BidGateway implements OnGatewayInit {
         {
           title: `Ваша ставка на аукцион перебита ${lastBid.auctionId}`,
           description: `Новая ставка: ${bidCreateWsDto.amount}`,
+          statusInfo: NotificationInfo.WARNING
         },
         lastBid.userId,
       );
     }
 
-    const bid = await this.bidService.createByAuctionId(
+    const bid = await this.bidService.placeBid(
       bidCreateWsDto,
       bidCreateWsDto.auctionId,
       session.id,
     );
-    await this.emitAuctionUpdate(bidCreateWsDto.auctionId);
+
+    
+    // await this.emitAuctionUpdate(bidCreateWsDto.auctionId);
   }
 
-  private async emitAuctionUpdate(auctionId: number) {
+  private listenEvent() {
+    this.eventEmitter.on('bid.updated',(data: BidDto) => this.emitAuctionUpdate(data))
+  }
+
+
+  private async emitAuctionUpdate(bid: BidDto) {
     const result: BidCreateResponseWsDto = {
-      currentBid: await this.bidService.getMaxBidByAuction(auctionId),
-      countBids: await this.bidService.getCountBidsByAuction(auctionId),
+      currentBid: await this.bidService.getMaxBidByAuction(bid.auctionId),
+      countBids: await this.bidService.getCountBidsByAuction(bid.auctionId),
     };
-    this.server.to(auctionId.toString()).emit(Connection.auctionUpdate, result);
+    this.server.to(bid.auctionId.toString()).emit(Connection.auctionUpdate, result);
   }
 }

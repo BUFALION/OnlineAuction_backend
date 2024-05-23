@@ -1,6 +1,4 @@
-
 import { DealStatus } from '@prisma/client';
-
 export const dealMachine = {
   id: 'deal',
   initial: DealStatus.CREATED,
@@ -22,13 +20,10 @@ export const dealMachine = {
       },
     },
     [DealStatus.CANCELLED]: {
-      on: {}, 
+      on: {},
     },
     [DealStatus.COMPLETED]: {
-      on: {}, 
+      on: {},
     },
   },
 };
-
-
-

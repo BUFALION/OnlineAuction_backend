@@ -24,8 +24,8 @@ export class UserService {
     return user;
   }
 
-  findByEmail(email: string) {
-    return this.db.user.findFirst({ where: { email } });
+  async findByEmail(email: string) {
+    return await this.db.user.findFirst({ where: { email } });
   }
 
   async findById(id: number) {
@@ -58,6 +58,29 @@ export class UserService {
         companyId: companyId,
       },
     });
+  }
+
+  async isUserCompanyOwner(userId: number, companyId: number) {
+    return await this.db.user.findUnique({
+      where: {
+        id: userId,
+        createdCompany: {
+          id: companyId,
+          creatorId: userId
+        }
+      },
+    })
+  }
+
+  async removeUserCompany(userId: number, companyId: number){
+    const isUserCompanyMember = this.isUserCompanyMember(userId, companyId)
+
+    if(!isUserCompanyMember) throw new NotFoundException('User not found')
+    
+    await this.db.user.update({
+      where: {id: userId},
+      data: {companyId: null}
+    })
   }
 
   create(email: string, hash: string, salt: string) {

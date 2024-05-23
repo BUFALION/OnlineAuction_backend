@@ -25,7 +25,7 @@ export class TokenService {
     }
     return invitationToken;
   }
-
+ 
   async deleteToken(token: TokenDto) {
     await this.db.invitationToken.delete({ where: { token: token.token } });
   }

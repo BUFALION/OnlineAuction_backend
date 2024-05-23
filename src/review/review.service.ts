@@ -53,11 +53,11 @@ export class ReviewService {
 
   //   const deals = await this.dealService.findBySellerId(sellerId)
   //REFACTORING
-  async findBySellerId(sellerId: number) {
+  async findByCompanyId(companyId: number) {
     const reviews = await this.db.review.findMany({
       where: {
         deal: {
-          sellerId,
+          companyId: companyId,
         },
       },
     });

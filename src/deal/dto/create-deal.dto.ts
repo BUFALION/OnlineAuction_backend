@@ -10,10 +10,15 @@ export class CreateDealDto {
     @ApiProperty()
     @IsInt()
     @IsNotEmpty()
-    sellerId: number;
+    companyId: number;
     
     @ApiProperty()
     @IsInt()
     @IsNotEmpty()
     buyerId: number;
+
+    @ApiProperty()
+    @IsInt()
+    @IsNotEmpty()
+    price: number;
 }

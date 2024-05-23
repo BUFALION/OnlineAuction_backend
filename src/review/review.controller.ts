@@ -29,14 +29,15 @@ export class ReviewController {
     return await this.reviewService.findAll();
   }
 
-  @Get('seller/:sellerId')
+  @Get('company/:companyId')
   @ApiOkResponse({
     type: [ReviewDto],
   })
-  async findAllBySellerId(@Param('sellerId', ParseIntPipe)sellerId: number): Promise<ReviewDto[]> {
-    return await this.reviewService.findBySellerId(sellerId);
+  async findAllBySellerId(@Param('companyId', ParseIntPipe)companyId: number): Promise<ReviewDto[]> {
+    return await this.reviewService.findByCompanyId(companyId);
   }
 
+  
   @UseGuards(AuthGuard)
   @Post('deal/:dealId')
   @ApiOkResponse({

@@ -9,7 +9,6 @@ export class StateMachine<T> {
     transition(currentState: string, action: string): T | null {
       const availableTransitions = this.machine.states[currentState]?.on;
   
-      console.log(availableTransitions?.['CONFIRMED'])
       // if (availableTransitions && availableTransitions[action]) {
       //   return availableTransitions[action];
       // } else {

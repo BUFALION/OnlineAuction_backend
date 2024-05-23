@@ -42,6 +42,16 @@ constructor(private readonly dealService: DealService) {}
     }
 
     @UseGuards(AuthGuard)
+    @Get('company/:companyId')
+    @ApiOkResponse({
+        type: [DealDto]
+    })
+    async findAllDealsByCompanyId(@Param('companyId',ParseIntPipe) companyId: number){
+        return await this.dealService.findBySellerId(companyId)
+    }
+
+
+    @UseGuards(AuthGuard)
     @Put(':id/paid')
     @ApiOkResponse({
         type: DealDto
