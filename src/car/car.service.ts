@@ -75,7 +75,7 @@ export class CarService {
             )
             .pipe(
               catchError((error: AxiosError) => {
-                this.logger.error('Error uploading to external service', error.stack);
+                this.logger.error('Error uploading to external service', error.message);
                 throw error;
               }),
             ),
