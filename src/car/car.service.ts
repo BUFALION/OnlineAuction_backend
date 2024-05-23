@@ -70,12 +70,12 @@ export class CarService {
         const { data } = await firstValueFrom(
           this.httpService
             .post(
-              `https://api.imgbb.com/1/upload?key=${process.env.IMG_API_KEY}`,
+              `https://api.imgbb.com/1/upload?key=6264bd3c1c686f1aa02b6d85cc41a6b8`,
               formData,
             )
             .pipe(
-              catchError((error: AxiosError) => {
-                this.logger.error('Error uploading to external service', error);
+              catchError((error) => {
+                this.logger.error('Error uploading to external service', JSON.stringify(error));
                 throw error;
               }),
             ),
