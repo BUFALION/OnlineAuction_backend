@@ -90,7 +90,25 @@ export class DealService {
         buyerId: buyerId,
       },
       include: {
-        payment: true
+        payment: true,
+        company: true,
+        auction: {
+          include: {
+            car: {
+              include: {
+                generation: {
+                  include: {
+                    model: {
+                      include: {
+                        make: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     });
   }

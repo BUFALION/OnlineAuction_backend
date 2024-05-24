@@ -122,6 +122,7 @@ export class AuctionService {
         include: {
           car: {
             include: {
+              company: true,
               generation: {
                 include: {
                   model: {
