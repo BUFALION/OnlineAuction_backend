@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "tidy-muse-418417",
+  "private_key_id": "178efed410ac86f2db17a2d205a703a69d526be9",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCjkoWSpNgqtb2q\nJh2QD7GK7rB9DfhyDgk4ZIAcpfq28XkWx/LwGSPK/N85hwunOxCuGadgop3Bndhm\nv6R6WGpO/9YwA43Vo2bncokcRBBIMuPT/TwTrB9mYk59jcrtdNZyUzLJnta8D1ss\n4i8nCMGm+nrAm4EjLW1tPgW3KBrqDMhjdSAfS85Kw3WWaDVtwK0IiHC00uGkACuy\nxLmhEzDMKacWqNXSzI0QxZc76xn/9rXYsjwJEOhoek1Cy8XUBYuxDikEBRDBPznM\nGNcdsKJuaCVVjv0/J9U9Xxh4hjJr12PVRWACyHB4u6cN1ypLW+AdE+FvMtlqH1th\nfCUnXc9LAgMBAAECggEAFmbZO0mvPz4vsQ9SSioUDyp8akwRBBHPCnWdJA9JRGfS\nxR9yMpbG06SJL9hCbM9GjAmAZlgvEda7zeqeLJFSUepw25eJA8LCs5z4kTHzJugt\nUpmicjFHBZ8eD8ztB1NSkUq6sGk8EHpr6rw5Z/enieZRDHLfn0E39NejMb/g27/X\nRZAPQUg25gkVFVcoimZZ2xpfiJLX0jB2DG1POYARITw3PBUHwZo9I/S7Akq7MzTp\n2+dD0zT83KiYZgWXOKF7iOBg4HKaeo1r+Oyy0KF3BNGMrfwKgvMDSWIFeZqBjaIw\ndiivE9UzSaSRxMfEicTi23TIwWhCTkVr1/deeySGoQKBgQDZJApUqc4f0IM0vwaz\nVzNhkQpoTforgV2kiA32ZgBRPUAd4KvDtYcK4K12VfS1KOgH8EPsFDqH2fa9IaZi\nfp/Hjd4Kwrt9/KQyfRHgQ66DlHgUMYYBt0w/2VRGTn1WcZrYTHcC5Tk7GNhs0lod\nlJdxkFTJKvNfB0FIG1x39j3v4QKBgQDA2FQyOoIVQ5bFiuRbS+CHeoJV9G8Gn6rr\nxHdeMloW1vakinL8VX0a/UksWWm8yimAomQx2iVlSYUsQYwla4oDVQhk2ibvcjGf\n3QxOKZ6lPUOUZgAZGBffXaUAS4xxBAM90OfiXsRpuzgrNJ0VzBNSAPEAncdEAgrz\nls6BEWEUqwKBgGAY/ylw7PRPh4G0ePatxOONGRoISIsweYzzWZqOkd1iShnu8JVw\npQ8/WAVjDSWPsQCyaJz2ZuDwqa4SUlyMxZG/S2FfxTKAuPpPN7YUvgslje8B69ie\nknQ/bnifDAFRzcGkNZdmcumgmUev4Inu1QdBZQSSqZqIz29mDIpaxBaBAoGALscK\nvVhV34SSmP5U4BRqtVIxNVpiaA/o7OGuNsot8iZYk5cFx1GRVC+mRTy3GlVLdelu\nNm187rHDvPV1YkpQovhIXfZQxXpEsUt0Ra1wzxIqR1/qnCus9sCHWqf4vB1GEAOR\ni+aC7Ea+nDRZ+kSTVyvlScn74PJB585n7wThMJsCgYEAjty8+F7qq64s8jH7SOQp\nHuUL8o0AnBYNDFDw4HHc/50Dw+NlIGAW9cSUlatoWbnyU3IBwI+StazEzHGLYA8u\nnfShXdFYtTkUX52fyaPuPkig/pmMbwroMQW1CSmo2Kxn74MH9+a+uStg+0hECKY6\nRKXe5eoVaVkRle2n+Rvc/5Y=\n-----END PRIVATE KEY-----\n",
+  "client_email": "bufal-view-google-analytics@tidy-muse-418417.iam.gserviceaccount.com",
+  "client_id": "105510697998815104567",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/bufal-view-google-analytics%40tidy-muse-418417.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

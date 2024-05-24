@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@golevelup/nestjs-stripe": "^0.6.4",
+    "@google-analytics/data": "^4.7.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/axios": "^3.0.2",
     "@nestjs/cache-manager": "^2.2.2",
@@ -44,6 +45,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "ejs": "^3.1.10",
+    "googleapis": "^137.1.0",
     "prisma-pagination": "^0.2.3",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
