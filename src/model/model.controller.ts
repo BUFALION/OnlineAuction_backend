@@ -2,9 +2,10 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post } from '@nestj
 import { ModelService } from './model.service';
 import { CreateModelDto } from './dto/create-model.dto';
 import { ModelDto } from './dto/model.dto';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('model')
+@ApiTags('models')
 export class ModelController {
 
     constructor(private readonly modelService: ModelService){}
@@ -39,5 +40,6 @@ export class ModelController {
     async deleteById(@Param('id', ParseIntPipe) generationId: number ) {
       return await this.modelService.deleteById(generationId)
     }
+
 
 }

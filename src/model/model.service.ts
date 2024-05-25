@@ -30,4 +30,6 @@ export class ModelService {
       where: {id: id}
     })
   }
+
+
 }

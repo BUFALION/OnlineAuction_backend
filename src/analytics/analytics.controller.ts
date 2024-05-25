@@ -1,11 +1,12 @@
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { google } from 'googleapis';
 import * as fs from 'fs';
 import * as path from 'path';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { DbService } from 'src/db/db.service';
 import { AnalyticsService } from './analytics.service';
+import { TotalCompanyDto } from './dto/total-company.dto';
 
 @Controller('analytics')
 @ApiTags('analytics')
@@ -14,13 +15,12 @@ export class AnalyticsController {
   private config: any;
 
   private analyticsDataClient;
-  constructor(private readonly db: DbService,
-              private readonly analyticsService: AnalyticsService
-    
+  constructor(
+    private readonly db: DbService,
+    private readonly analyticsService: AnalyticsService,
   ) {
     this.analyticsDataClient = new BetaAnalyticsDataClient();
   }
-  
 
   @Get()
   async getAuctionsByUser(userId = 1): Promise<any> {
@@ -73,39 +73,47 @@ export class AnalyticsController {
     }
   }
 
-
-
-
   @Get('company/:companyId')
   async getBidsByDay(@Param('companyId', ParseIntPipe) companyId: number) {
-    return await this.analyticsService.getDailyBidsCompany(companyId)
+    return await this.analyticsService.getDailyBidsCompany(companyId);
   }
 
   @Get('payment/:companyId')
-  async getDailyPaymentCompany(@Param('companyId', ParseIntPipe) companyId: number) {
-    return await this.analyticsService.getDailyPaymentCompany(companyId)
+  async getDailyPaymentCompany(
+    @Param('companyId', ParseIntPipe) companyId: number,
+  ) {
+    return await this.analyticsService.getDailyPaymentCompany(companyId);
   }
 
-  
-  async generateRandomBids(auctionId = 1, numberOfBids = 100) {
-    const bids = [];
-    const nextDay = new Date();
-    nextDay.setDate(nextDay.getDate() + 1);
-    for (let i = 0; i < numberOfBids; i++) {
-      const amount = Math.random() * 1000; // Генерация случайной суммы ставки
-
-      const createdBid = await this.db.bid.create({
-        data: {
-          amount,
-          userId: 1, // Здесь вы должны указать ID пользователя, сделавшего ставку
-          auctionId,
-          createdAt: nextDay,
-        },
-      });
-
-      bids.push(createdBid);
-    }
-
-    return bids;
+  @ApiOkResponse({
+    type: TotalCompanyDto,
+  })
+  @Get('company/total/:companyId')
+  async getTotalAnalyticsCompany(
+    @Param('companyId', ParseIntPipe) companyId: number,
+  ) {
+    return await this.analyticsService.getTotalAnalyticsCompany(companyId);
   }
+
+  // async generateRandomBids(auctionId = 1, numberOfBids = 100) {
+  //   const bids = [];
+  //   const nextDay = new Date();
+  //   nextDay.setDate(nextDay.getDate() + 1);
+  //   for (let i = 0; i < numberOfBids; i++) {
+  //     const amount = Math.random() * 1000; // Генерация случайной суммы ставки
+
+  //     const createdBid = await this.db.bid.create({
+  //       data: {
+  //         amount,
+  //         userId: 1, // Здесь вы должны указать ID пользователя, сделавшего ставку
+  //         auctionId,
+  //         createdAt: nextDay,
+  //       },
+  //     });
+
+  //     bids.push(createdBid);
+  //   }
+
+  //   return bids;
+  // }
 }

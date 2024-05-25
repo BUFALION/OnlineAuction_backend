@@ -50,6 +50,29 @@ export class DealService {
         `Invalid action "${event}" for state "${currentState}". Check the allowed transitions.`,
       );
     }
+    //HARD CODE 
+    if(event === DealStatus.PAID){
+      return await this.db.deal.update({
+        where: {
+          id: deal.id,
+        },
+        data: {
+          status: state,
+          paymentAt: new Date(Date.now())
+        },
+      });
+    }else if(event === DealStatus.CONFIRMED){
+      return await this.db.deal.update({
+        where: {
+          id: deal.id,
+        },
+        data: {
+          status: state,
+          confirmedAt: new Date(Date.now())
+        },
+      });
+    }
+
     return await this.db.deal.update({
       where: {
         id: deal.id,

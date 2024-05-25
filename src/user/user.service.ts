@@ -1,18 +1,22 @@
+import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { AxiosError } from 'axios';
+import { catchError, firstValueFrom } from 'rxjs';
 import { GetSessionDto } from 'src/auth/dto/get-session.dto';
 import { DbService } from 'src/db/db.service';
-import { TokenDto } from 'src/token/dto/token.dto';
 import { TokenService } from 'src/token/token.service';
+import { UpdateUser } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly db: DbService,
     private readonly tokenService: TokenService,
+    private readonly httpService: HttpService,
   ) {}
 
   async getUser(id: number) {
@@ -112,5 +116,33 @@ export class UserService {
 
     await this.tokenService.deleteToken(invitationToken);
     return user;
+  }
+
+  
+
+  async uploadFile(photo: Express.Multer.File) {
+    const formData = new FormData();
+    formData.append('image', photo.buffer.toString('base64'));
+
+    const { data } = await firstValueFrom(
+      this.httpService
+        .post(
+          `https://api.imgbb.com/1/upload?key=6264bd3c1c686f1aa02b6d85cc41a6b8`,
+          formData,
+        )
+        .pipe(
+          catchError((error: AxiosError) => {
+            throw error;
+          }),
+        ),
+    );
+    return data.data.url;
+  }
+
+  async updateUser(id:number,updateUser: UpdateUser) {
+    return await this.db.user.update({
+      where: { id },
+      data:{...updateUser}
+    })
   }
 }

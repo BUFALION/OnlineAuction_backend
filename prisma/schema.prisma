@@ -16,6 +16,8 @@ model User {
 
   firstName String @map("first_name")
   secondName String @map("second_name")
+  imageUrl String? @map("image_url")
+  phoneNumber String? @map("phone_number")
 
   favoire Favorite[]
   bids  Bid[]

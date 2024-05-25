@@ -83,6 +83,7 @@ export class CompanyService {
     );
     return data.data.url;
   }
+  
   async updateCompany(id: number, companyUpdateDto: CompanyUpdate) {
     return this.db.company.update({
       where: { id },

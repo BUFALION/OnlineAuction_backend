@@ -56,7 +56,7 @@ constructor(private readonly dealService: DealService) {}
     @ApiOkResponse({
         type: DealDto
     })
-    async paidOrder(@Param('id', ParseIntPipe) id: number ){
+    async paidDeal(@Param('id', ParseIntPipe) id: number ){
         return await this.dealService.changeStatus(id,DealStatus.PAID)
     }
 
@@ -65,9 +65,20 @@ constructor(private readonly dealService: DealService) {}
     @ApiOkResponse({
         type: DealDto
     })
-    async confirmOrder(@Param('id', ParseIntPipe) id: number ){
+    async confirmDeal(@Param('id', ParseIntPipe) id: number ){
         return await this.dealService.changeStatus(id,DealStatus.CONFIRMED)
     }
+
+    //GUARD CHECK USER BELONGS COMPANY
+    @UseGuards(AuthGuard)
+    @Put(':id/cancel')
+    @ApiOkResponse({
+        type: DealDto
+    })
+    async cancelDeal(@Param('id', ParseIntPipe) id: number ){
+        return await this.dealService.changeStatus(id,DealStatus.CANCELLED)
+    }
+
 
 
 }

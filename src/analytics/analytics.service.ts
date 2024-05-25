@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PaymentStatus } from '@prisma/client';
 import { DbService } from 'src/db/db.service';
-
+import { TotalCompanyDto } from './dto/total-company.dto';
 
 interface Summarizable {
-  amount : number;
+  amount: number;
   createdAt: Date;
 }
 
@@ -13,43 +13,25 @@ export class AnalyticsService {
   constructor(private readonly db: DbService) {}
 
   async getDailyBidsCompany(companyId: number) {
-    const dailyBids = await this.getDailyData(() =>
-      this.db.bid.findMany({
-        where: {
-          auction: {
-            car: {
-              companyId,
-            },
+    const dailyBids = await this.db.bid.findMany({
+      where: {
+        auction: {
+          car: {
+            companyId,
           },
         },
-        select: {
-          amount: true,
-          createdAt: true,
-        },
-      }),
-    );
+      },
+      select: {
+        amount: true,
+        createdAt: true,
+      },
+    });
 
-    // const bids = await this.db.bid.findMany({
-    //   where: {
-    //     auction: {
-    //       car: {
-    //         companyId,
-    //       },
-    //     },
-    //   },
-    //   select: {
-    //     amount: true,
-    //     createdAt: true,
-    //   },
-    // });
-
-    return dailyBids
+    return this.getDailyData(dailyBids);
   }
 
   async getDailyPaymentCompany(companyId: number) {
-    
-    const payments = await this.db.deal.findMany({
-      
+    const dailyPayments = await this.db.deal.findMany({
       where: {
         companyId,
         payment: {
@@ -60,41 +42,105 @@ export class AnalyticsService {
         price: true,
         createdAt: true,
       },
-      
     });
-    return this.formateData(payments)
+
+    const FormatedDailyPayments: Summarizable[] = dailyPayments.map(
+      (payment) => ({
+        amount: payment.price,
+        createdAt: payment.createdAt,
+      }),
+    );
+
+    return this.getDailyData(FormatedDailyPayments);
+  }
+  
+  async getBidCountForCompany(companyId: number): Promise<number> {
+    const bidCount = await this.db.bid.count({
+      where: {
+        auction:{
+          car: {
+            companyId
+          }
+        }
+      },
+    });
+
+    return bidCount;
   }
 
-  private formateData(object) {
-    const amountsByDay = object.reduce((acc, curr) => {
-      const day = curr.createdAt.toISOString().split('T')[0]; // Extracting date part
-      acc[day] = (acc[day] || 0) + curr.price;
-      return acc;
-    }, {});
+  async getAuctionCountForCompany(companyId: number): Promise<number> {
+    const auctionCount = await this.db.auction.count({
+      where: {
+        car: {
+          companyId
+        }
+      }
+    })
+    return auctionCount
+  }
 
-    return Object.keys(amountsByDay).map((day) => ({
-      day,
-      sum: amountsByDay[day],
-    }));
+  async getDealCountForCompany(companyId: number): Promise<number> {
+    const dealCount = await this.db.deal.count({
+      where: {
+        companyId
+      }
+    })
+    return dealCount
+  }
+
+  async getPaymentSumForCompany(companyId: number): Promise<number> {
+    const payment = await this.db.deal.aggregate({
+      where: {
+        companyId: companyId,
+        payment: {
+          status: PaymentStatus.PAID, 
+        },
+      },
+      _sum: {
+        price: true, 
+      },
+    });
+    return payment._sum.price || 0
+  }
+
+  async getTotalAnalyticsCompany(companyId: number): Promise<TotalCompanyDto> {
+    return {
+      dealCount: await this.getDealCountForCompany(companyId),
+      auctionCount: await this.getAuctionCountForCompany(companyId),
+      bidCount: await this.getBidCountForCompany(companyId),
+      paymentSum: await this.getPaymentSumForCompany(companyId)
+    }
   }
 
 
+  private getDailyData = <T extends Summarizable>(data: T[]) =>
+    this.formatData(data);
 
-  async getDailyData<T extends Summarizable>(getDataFn: () => Promise<T[]>) {
-    const data = await getDataFn();
-    return this.formatData(data);
-  }
-
-  private formatData<T extends Summarizable>(data: T[]) {
+  private formatData<T extends Summarizable>(
+    data: T[],
+    dateStart: Date = new Date('2024-04-25'),
+    dateEnd: Date = new Date(Date.now()),
+  ) {
     const amountsByDay = data.reduce((acc, curr) => {
-      const day = curr.createdAt.toISOString().split('T')[0]; // Extracting date part
+      const day = curr.createdAt.toISOString().split('T')[0];
       acc[day] = (acc[day] || 0) + curr.amount;
       return acc;
     }, {});
 
-    return Object.keys(amountsByDay).map((day) => ({
-      day,
-      sum: amountsByDay[day],
-    }));
+    const dates = [];
+    let currentDate = new Date(dateStart);
+
+    while (currentDate <= dateEnd) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return dates.map((date) => {
+      const day = date.toISOString().split('T')[0];
+      return {
+        day,
+        sum: amountsByDay[day] || 0,
+      };
+    });
   }
 }

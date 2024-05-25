@@ -147,4 +147,8 @@ export class AuctionController {
   async inProgrssAuction(@Param('id', ParseIntPipe) id: number ){
     return await this.auctionService.changeStatus(id,AuctionStatus.IN_PROGRESS)
   }
+
+
+
+
 }

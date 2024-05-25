@@ -6,6 +6,7 @@ export const dealMachine = {
     [DealStatus.CREATED]: {
       on: {
         CONFIRMED: DealStatus.CONFIRMED,
+        CANCELLED: DealStatus.CANCELLED,
       },
     },
     [DealStatus.CONFIRMED]: {

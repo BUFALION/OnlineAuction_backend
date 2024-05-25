@@ -103,8 +103,8 @@ export class AuctionService {
           car: {
             generation: {
               model: {
-                makeId: +makeId || undefined, // Use undefined to ignore the filter if makeId is not provided
-                id: +modelId || undefined, // Use undefined to ignore the filter if modelId is not provided
+                makeId: +makeId || undefined,
+                id: +modelId || undefined, 
               },
             },
             AND: [
@@ -114,6 +114,7 @@ export class AuctionService {
           },
         },
         orderBy: [
+          
           { car: { year: 'asc' } }, // Sort by car year in ascending order
           { car: { generation: { model: { make: { makeName: 'asc' } } } } }, // Then by make name
           { car: { generation: { model: { modelName: 'asc' } } } }, // Then by model name
