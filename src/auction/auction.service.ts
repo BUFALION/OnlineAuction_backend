@@ -72,7 +72,7 @@ export class AuctionService {
       },
     });
 
-    this.createAuctionCron(auction, companyId);
+    this.scheduleAuction(auction, companyId);
     return auction;
   }
 
@@ -104,7 +104,7 @@ export class AuctionService {
             generation: {
               model: {
                 makeId: +makeId || undefined,
-                id: +modelId || undefined, 
+                id: +modelId || undefined,
               },
             },
             AND: [
@@ -114,7 +114,6 @@ export class AuctionService {
           },
         },
         orderBy: [
-          
           { car: { year: 'asc' } }, // Sort by car year in ascending order
           { car: { generation: { model: { make: { makeName: 'asc' } } } } }, // Then by make name
           { car: { generation: { model: { modelName: 'asc' } } } }, // Then by model name
@@ -227,60 +226,139 @@ export class AuctionService {
     return auctions;
   }
 
-  createAuctionCron(auctin: AuctionDto, companyId: number) {
-    const cronName = `auction-${auctin.id}`;
+  // createAuctionCron(auctin: AuctionDto, companyId: number) {
+  //   const cronName = `auction-${auctin.id}`;
 
-    const job = new CronJob(auctin.dateEnd, async () => {
-      this.logger.log(`Ending auction with ID ${auctin.id}`);
-      const bid = await this.db.bid.findFirst({
-        where: { auctionId: auctin.id },
-        orderBy: { amount: 'desc' },
-      });
+  //   const job = new CronJob(auctin.dateEnd, async () => {
+  //     this.logger.log(`Ending auction with ID ${auctin.id}`);
+  //     const bid = await this.db.bid.findFirst({
+  //       where: { auctionId: auctin.id },
+  //       orderBy: { amount: 'desc' },
+  //     });
 
-      if (bid) {
-        this.changeStatus(auctin.id, AuctionStatus.PLAYED);
-        await this.notificationService.create(
-          {
-            title: `Вы выйграли аукцион ${bid.auctionId}`,
-            description: `Ваша ставка: ${bid.amount}`,
-            statusInfo: NotificationInfo.SUCCESS,
-          },
-          bid.userId,
-        );
+  //     if (bid) {
+  //       this.changeStatus(auctin.id, AuctionStatus.PLAYED);
+  //       await this.notificationService.create(
+  //         {
+  //           title: `Вы выйграли аукцион ${bid.auctionId}`,
+  //           description: `Ваша ставка: ${bid.amount}`,
+  //           statusInfo: NotificationInfo.SUCCESS,
+  //         },
+  //         bid.userId,
+  //       );
 
-        await this.notificationService.create(
-          {
-            title: `Ваш аукцион был сыгран ${auctin.id}`,
-            description: `Выигрышная ставка : ${bid.amount}`,
-            statusInfo: NotificationInfo.SUCCESS,
-          },
-          companyId,
-        );
+  //       await this.notificationService.create(
+  //         {
+  //           title: `Ваш аукцион был сыгран ${auctin.id}`,
+  //           description: `Выигрышная ставка : ${bid.amount}`,
+  //           statusInfo: NotificationInfo.SUCCESS,
+  //         },
+  //         companyId,
+  //       );
 
-        await this.dealService.create({
-          auctionId: auctin.id,
-          companyId: companyId,
-          buyerId: bid.userId,
-          price: bid.amount,
-        });
-      } else {
-        this.changeStatus(auctin.id, AuctionStatus.CANCELLED);
-        await this.notificationService.create(
-          {
-            title: `Ваш аукцион не был сыгран ${auctin.id}`,
-            description: `Никто не сделал ставку`,
-            statusInfo: NotificationInfo.ERROR,
-          },
-          companyId,
-        );
-      }
+  //       await this.dealService.create({
+  //         auctionId: auctin.id,
+  //         companyId: companyId,
+  //         buyerId: bid.userId,
+  //         price: bid.amount,
+  //       });
+  //     } else {
+  //       this.changeStatus(auctin.id, AuctionStatus.CANCELLED);
+  //       await this.notificationService.create(
+  //         {
+  //           title: `Ваш аукцион не был сыгран ${auctin.id}`,
+  //           description: `Никто не сделал ставку`,
+  //           statusInfo: NotificationInfo.ERROR,
+  //         },
+  //         companyId,
+  //       );
+  //     }
+  //   });
+
+  //   this.schedulerRegistry.addCronJob(cronName, job);
+
+  //   job.start();
+  //   this.changeStatus(auctin.id, AuctionStatus.IN_PROGRESS);
+  //   this.logger.log(`Created cron for auction with ID ${auctin.id}`);
+  // }
+
+  private async scheduleAuction(auction: AuctionDto, companyId: number) {
+    const cronJobAuctionEnd = new CronJob(
+      auction.dateEnd,
+      async () => await this.endAuction(auction, companyId),
+    );
+
+    const cronJobAuctionStart = new CronJob(auction.dateStart, async () => {
+      await this.startAuction(auction, cronJobAuctionEnd);
     });
 
-    this.schedulerRegistry.addCronJob(cronName, job);
+    this.schedulerRegistry.addCronJob(
+      `start-auction-${auction.id}`,
+      cronJobAuctionStart,
+    );
+    this.schedulerRegistry.addCronJob(
+      `end-auction-${auction.id}`,
+      cronJobAuctionEnd,
+    );
 
-    job.start();
-    this.changeStatus(auctin.id, AuctionStatus.IN_PROGRESS);
-    this.logger.log(`Created cron for auction with ID ${auctin.id}`);
+    cronJobAuctionStart.start();
+  }
+
+  private startAuction(auction: AuctionDto, cronJobAuctionEnd: CronJob) {
+    try {
+      this.changeStatus(auction.id, AuctionStatus.IN_PROGRESS);
+      this.logger.log(`Auction ${auction.id} started successfully`);
+      cronJobAuctionEnd.start();
+      this.logger.log(`Created cron for ending auction with ID ${auction.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to start auction ${auction.id}`, error.stack);
+    }
+  }
+  
+  private async endAuction(auction: AuctionDto, companyId: number) {
+    this.logger.log(`Ending auction with ID ${auction.id}`);
+    const bid = await this.db.bid.findFirst({
+      where: { auctionId: auction.id },
+      orderBy: { amount: 'desc' },
+    });
+
+    if (bid) {
+      this.changeStatus(auction.id, AuctionStatus.PLAYED);
+      await this.notificationService.create(
+        {
+          title: `Вы выйграли аукцион ${bid.auctionId}`,
+          description: `Ваша ставка: ${bid.amount}`,
+          statusInfo: NotificationInfo.SUCCESS,
+        },
+        bid.userId,
+      );
+
+      await this.notificationService.create(
+        {
+          title: `Ваш аукцион был сыгран ${auction.id}`,
+          description: `Выигрышная ставка : ${bid.amount}`,
+          statusInfo: NotificationInfo.SUCCESS,
+        },
+        companyId,
+      );
+
+      await this.dealService.create({
+        auctionId: auction.id,
+        companyId: companyId,
+        buyerId: bid.userId,
+        price: bid.amount,
+      });
+    } else {
+      this.changeStatus(auction.id, AuctionStatus.CANCELLED);
+      await this.notificationService.create(
+        {
+          title: `Ваш аукцион не был сыгран ${auction.id}`,
+          description: `Никто не сделал ставку`,
+          statusInfo: NotificationInfo.ERROR,
+        },
+        companyId,
+      );
+    }
   }
 
   async checkAuctionExpiration(auctionId: number): Promise<boolean> {

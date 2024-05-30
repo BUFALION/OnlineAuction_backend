@@ -29,7 +29,23 @@ export class FavoriteService {
     return await this.db.favorite.findMany({ 
       where: { userId: userId },
       include: { 
-        auction: true 
+        auction: {
+          include: {
+            car: {
+              include: {
+                generation: {
+                  include: {
+                    model: {
+                      include: {
+                        make: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       } 
     });
   }
