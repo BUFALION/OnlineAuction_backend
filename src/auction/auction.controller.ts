@@ -81,6 +81,7 @@ export class AuctionController {
   @ApiQuery({ name: 'maxYear', description: 'Maximum year in the range', required: false })
   @ApiQuery({ name: 'makeId', description: 'Make ID', required: false })
   @ApiQuery({ name: 'modelId', description: 'Model ID', required: false })
+  @ApiQuery({ name: 'search', description: 'Searcg', required: false })
   async getAuctions(
     @Query('page') page: number = 1,
     @Query('perPage') perPage: number = 10,
@@ -88,10 +89,12 @@ export class AuctionController {
     @Query('maxYear') maxYear?: number,
     @Query('makeId') makeId?: number,
     @Query('modelId') modelId?: number,
+    @Query('search') search?: string,
   ): Promise<PaginatedOutputDto<AuctionDto>> {
     const yearRange = [+minYear, +maxYear];
-    return await this.auctionService.findAll(page, perPage, {yearRange , makeId, modelId });
+    return await this.auctionService.findAll(page, perPage, {yearRange , makeId, modelId,search });
   }
+  
   @Get('test')
   async getSortedAuctions(    
   @Query('minYear') minYear?: number, 

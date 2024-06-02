@@ -20,7 +20,7 @@ import { AuctionService } from 'src/auction/auction.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BidDto } from 'src/bid/dto/bid.dto';
-import { NotificationInfo } from '@prisma/client';
+import { Auction, NotificationInfo } from '@prisma/client';
 
 @WebSocketGateway({
   cors: {
@@ -113,8 +113,12 @@ export class BidGateway implements OnGatewayInit {
 
   private listenEvent() {
     this.eventEmitter.on('bid.updated',(data: BidDto) => this.emitAuctionUpdate(data))
+    this.eventEmitter.on('auction.start', (auction: Auction) => this.emitAuctionStart(auction))
   }
 
+  private async emitAuctionStart(auction: Auction) {
+    this.server.to(auction.id.toString()).emit(Connection.auctionStart);
+  }
 
   private async emitAuctionUpdate(bid: BidDto) {
     const result: BidCreateResponseWsDto = {
