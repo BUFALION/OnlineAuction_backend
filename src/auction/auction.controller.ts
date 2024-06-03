@@ -60,9 +60,21 @@ export class AuctionController {
   }
 
   @UseGuards(AuthGuard)
+  @ApiQuery({
+    name: 'filter',
+    enum: ['all', 'active', 'past'],
+    required: false,
+    description: 'Filter for auctions (all, active, past)',
+  })
   @Get('user')
-  async getAuctionByUserBids(@SessionInfo() session: GetSessionDto) {
-    const auctions = await this.auctionService.getAuctionByUserBids(session.id);
+  async getAuctionByUserBids(
+    @SessionInfo() session: GetSessionDto,
+    @Query('filter') filter: 'all' | 'active' | 'past' = 'all',
+  ) {
+    const auctions = await this.auctionService.getAuctionByUserBids(
+      session.id,
+      filter,
+    );
 
     if (!auctions) {
       throw new NotFoundException(
@@ -77,33 +89,52 @@ export class AuctionController {
   @ApiPaginatedResponse(AuctionDto)
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'perPage', required: false })
-  @ApiQuery({ name: 'minYear', description: 'Minimum year in the range', required: false })
-  @ApiQuery({ name: 'maxYear', description: 'Maximum year in the range', required: false })
+  @ApiQuery({
+    name: 'minYear',
+    description: 'Minimum year in the range',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'maxYear',
+    description: 'Maximum year in the range',
+    required: false,
+  })
   @ApiQuery({ name: 'makeId', description: 'Make ID', required: false })
   @ApiQuery({ name: 'modelId', description: 'Model ID', required: false })
   @ApiQuery({ name: 'search', description: 'Searcg', required: false })
   async getAuctions(
     @Query('page') page: number = 1,
     @Query('perPage') perPage: number = 10,
-    @Query('minYear') minYear?: number, 
+    @Query('minYear') minYear?: number,
     @Query('maxYear') maxYear?: number,
     @Query('makeId') makeId?: number,
     @Query('modelId') modelId?: number,
     @Query('search') search?: string,
   ): Promise<PaginatedOutputDto<AuctionDto>> {
     const yearRange = [+minYear, +maxYear];
-    return await this.auctionService.findAll(page, perPage, {yearRange , makeId, modelId,search });
+    return await this.auctionService.findAll(page, perPage, {
+      yearRange,
+      makeId,
+      modelId,
+      search,
+    });
   }
-  
+
   @Get('test')
-  async getSortedAuctions(    
-  @Query('minYear') minYear?: number, 
-  @Query('maxYear') maxYear?: number,
-  @Query('makeId') makeId?: number,
-  @Query('modelId') modelId?: number) {
+  async getSortedAuctions(
+    @Query('minYear') minYear?: number,
+    @Query('maxYear') maxYear?: number,
+    @Query('makeId') makeId?: number,
+    @Query('modelId') modelId?: number,
+  ) {
     const yearRange = [minYear, maxYear];
-    return this.auctionService.getSortedAuctions({yearRange , makeId, modelId });
+    return this.auctionService.getSortedAuctions({
+      yearRange,
+      makeId,
+      modelId,
+    });
   }
+
   @Get(':auctionId')
   @ApiOkResponse({
     type: [AuctionDto],
@@ -114,44 +145,42 @@ export class AuctionController {
     return await this.auctionService.findById(carId);
   }
 
-
   @UseGuards(AuthGuard)
   @Put(':id/cancel')
   @ApiOkResponse({
-      type: AuctionDto
+    type: AuctionDto,
   })
-  async cancelAuction(@Param('id', ParseIntPipe) id: number ){
-      return await this.auctionService.changeStatus(id,AuctionStatus.CANCELLED)
+  async cancelAuction(@Param('id', ParseIntPipe) id: number) {
+    return await this.auctionService.changeStatus(id, AuctionStatus.CANCELLED);
   }
 
   @UseGuards(AuthGuard)
   @Put(':id/played')
   @ApiOkResponse({
-      type: AuctionDto
+    type: AuctionDto,
   })
-  async playedAuction(@Param('id', ParseIntPipe) id: number ){
-    return await this.auctionService.changeStatus(id,AuctionStatus.PLAYED)
+  async playedAuction(@Param('id', ParseIntPipe) id: number) {
+    return await this.auctionService.changeStatus(id, AuctionStatus.PLAYED);
   }
 
   @UseGuards(AuthGuard)
   @Put(':id/notplayed')
   @ApiOkResponse({
-      type: AuctionDto
+    type: AuctionDto,
   })
-  async notPlayedAuction(@Param('id', ParseIntPipe) id: number ){
-    return await this.auctionService.changeStatus(id,AuctionStatus.NOT_PLAYED)
+  async notPlayedAuction(@Param('id', ParseIntPipe) id: number) {
+    return await this.auctionService.changeStatus(id, AuctionStatus.NOT_PLAYED);
   }
 
   @UseGuards(AuthGuard)
   @Put(':id/inprogress')
   @ApiOkResponse({
-      type: AuctionDto
+    type: AuctionDto,
   })
-  async inProgrssAuction(@Param('id', ParseIntPipe) id: number ){
-    return await this.auctionService.changeStatus(id,AuctionStatus.IN_PROGRESS)
+  async inProgrssAuction(@Param('id', ParseIntPipe) id: number) {
+    return await this.auctionService.changeStatus(
+      id,
+      AuctionStatus.IN_PROGRESS,
+    );
   }
-
-
-
-
 }

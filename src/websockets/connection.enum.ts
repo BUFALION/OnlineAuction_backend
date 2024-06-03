@@ -4,4 +4,5 @@ export enum Connection {
   newBid = 'newBid',
   auctionError = 'auctionError',
   auctionStart = 'auctionStart',
+  auctionEnd = 'auctionEnd',
 }

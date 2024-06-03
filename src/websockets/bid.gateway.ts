@@ -114,11 +114,11 @@ export class BidGateway implements OnGatewayInit {
   private listenEvent() {
     this.eventEmitter.on('bid.updated',(data: BidDto) => this.emitAuctionUpdate(data))
     this.eventEmitter.on('auction.start', (auction: Auction) => this.emitAuctionStart(auction))
+    this.eventEmitter.on('auction.end', (auction: Auction) => this.emitAuctionEnd(auction))
   }
 
-  private async emitAuctionStart(auction: Auction) {
-    this.server.to(auction.id.toString()).emit(Connection.auctionStart);
-  }
+  private emitAuctionStart = (auction: Auction) => this.server.to(auction.id.toString()).emit(Connection.auctionStart);
+  private emitAuctionEnd = (auction: Auction) => this.server.to(auction.id.toString()).emit(Connection.auctionEnd);
 
   private async emitAuctionUpdate(bid: BidDto) {
     const result: BidCreateResponseWsDto = {

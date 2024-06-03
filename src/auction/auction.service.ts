@@ -87,7 +87,19 @@ export class AuctionService {
         },
       },
       include: {
-        car: true,
+        car: {
+          include: {
+            generation: {
+              include: {
+                model: {
+                  include: {
+                    make: true
+                  }
+                }
+              }
+            }
+          }
+        }
       },
     });
   }
@@ -218,15 +230,26 @@ export class AuctionService {
     return auction;
   }
 
-  async getAuctionByUserBids(userId: number) {
-    const auctions = await this.db.auction.findMany({
-      where: {
-        bid: {
-          some: {
-            userId: userId,
-          },
+  async getAuctionByUserBids(userId: number, filter: 'all' | 'active' | 'past') {
+    let whereCondition: any = {
+      bid: {
+        some: {
+          userId: userId,
         },
       },
+    };
+
+    const now = new Date();
+
+    if (filter === 'active') {
+      whereCondition.dateStart = { lte: now };
+      whereCondition.dateEnd = { gte: now };
+    } else if (filter === 'past') {
+      whereCondition.dateEnd = { lt: now };
+    }
+
+    const auctions = await this.db.auction.findMany({
+      where: whereCondition,
       include: {
         bid: {
           where: {
@@ -236,10 +259,8 @@ export class AuctionService {
       },
     });
 
-    if (!auctions) {
-      throw new NotFoundException(
-        `No auctions found for user with ID ${userId}`,
-      );
+    if (!auctions || auctions.length === 0) {
+      throw new NotFoundException(`No auctions found for user with ID ${userId}`);
     }
 
     return auctions;
@@ -338,6 +359,7 @@ export class AuctionService {
 
   private async endAuction(auction: AuctionDto, companyId: number) {
     this.logger.log(`Ending auction with ID ${auction.id}`);
+    this.eventEmitter.emit('auction.end', auction);
     const bid = await this.db.bid.findFirst({
       where: { auctionId: auction.id },
       orderBy: { amount: 'desc' },
