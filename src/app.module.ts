@@ -25,6 +25,7 @@ import { PaymentStripeModule } from './payment-stripe/payment-stripe.module';
 import configs from './config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ServerTimeModule } from './server-time/server-time.module';
 
 @Module({
   controllers: [AppController],
@@ -61,6 +62,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
       load: [configs],
     }),
     AnalyticsModule,
+    ServerTimeModule,
     
   ],
 })
