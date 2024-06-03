@@ -26,6 +26,8 @@ import configs from './config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ServerTimeModule } from './server-time/server-time.module';
+import * as redisStore from 'cache-manager-redis-store'
+
 
 @Module({
   controllers: [AppController],
@@ -47,7 +49,12 @@ import { ServerTimeModule } from './server-time/server-time.module';
     GenerationModule,
     DescriptionModule,
     ScheduleModule.forRoot(),
-    CacheModule.register({ isGlobal: true }),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore,
+      url: process.env.REDIS_URL
+    }),
+    
     EventEmitterModule.forRoot({
       global: true,
     }),
