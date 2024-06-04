@@ -52,6 +52,7 @@ export class DealService {
     }
     //HARD CODE 
     if(event === DealStatus.PAID){
+      this.stateMachine.transition(currentState, DealStatus.COMPLETED);
       return await this.db.deal.update({
         where: {
           id: deal.id,
@@ -62,6 +63,7 @@ export class DealService {
         },
       });
     }else if(event === DealStatus.CONFIRMED){
+      this.paymentStripe.createCheck(deal.id, deal.price);
       return await this.db.deal.update({
         where: {
           id: deal.id,
@@ -101,8 +103,6 @@ export class DealService {
         ...createDealDto,
       },
     });
-
-    this.paymentStripe.createCheck(deal.id, deal.price);
 
     return deal;
   }

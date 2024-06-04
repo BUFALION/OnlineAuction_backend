@@ -33,6 +33,7 @@ export class FavoriteService {
           include: {
             car: {
               include: {
+                company: true,
                 generation: {
                   include: {
                     model: {

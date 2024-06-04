@@ -24,9 +24,10 @@ const paginate: PaginatorTypes.PaginateFunction = paginator({ perPage: 10 });
 
 export type AuctionFilter = {
   yearRange?: [number, number] | number[];
+  millageRange?: [number, number] | number[];
   makeId?: number;
   modelId?: number;
-  search?: string
+  search?: string;
 };
 
 @Injectable()
@@ -40,7 +41,7 @@ export class AuctionService {
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly notificationService: NotificationService,
     private readonly dealService: DealService,
-    private readonly eventEmitter: EventEmitter2
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.stateMachine = new StateMachine(auctionMachine);
   }
@@ -93,13 +94,13 @@ export class AuctionService {
               include: {
                 model: {
                   include: {
-                    make: true
-                  }
-                }
-              }
-            }
-          }
-        }
+                    make: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -110,7 +111,7 @@ export class AuctionService {
     perPage: number,
     filter: AuctionFilter,
   ): Promise<PaginatedOutputDto<AuctionDto>> {
-    const { yearRange, makeId, modelId,search } = filter;
+    const { yearRange, makeId, modelId, search,millageRange } = filter;
     return await paginate(
       this.db.auction,
       {
@@ -132,13 +133,18 @@ export class AuctionService {
                 id: +modelId || undefined,
               },
             },
+            mileage: {
+              gte: millageRange[0] || undefined,
+              lte: millageRange[1] || undefined,
+            },
+
             AND: [
               yearRange[0] && { year: { gte: yearRange[0] } },
               yearRange[1] && { year: { lte: yearRange[1] } },
             ].filter(Boolean),
           },
-        
         },
+        
         orderBy: {
           dateEnd: 'asc',
         },
@@ -172,53 +178,6 @@ export class AuctionService {
     );
   }
 
-  async getSortedAuctions(filter: AuctionFilter) {
-    const { yearRange, makeId, modelId } = filter;
-    const search = 'r';
-    const auctions = await this.db.auction.findMany({
-      where: {
-      
-        car: {
-          generation: {
-            model: {
-              makeId: +makeId || undefined, // Use undefined to ignore the filter if makeId is not provided
-              id: +modelId || undefined, // Use undefined to ignore the filter if modelId is not provided
-            },
-          },
-          AND: [
-            yearRange && { year: { gte: yearRange[0] } },
-            yearRange && { year: { lte: yearRange[1] } },
-            //  { year: { gte: 1700 } },
-            //  { year: { lte: 200000 } },
-          ].filter(Boolean),
-        },
-      },
-      orderBy: [
-        { createdAt: 'asc' },
-        // { car: { year: 'asc' } }, // Sort by car year in ascending order
-        // { car: { generation: { model: { make: { makeName: 'asc' } } } } }, // Then by make name
-        // { car: { generation: { model: { modelName: 'asc' } } } }, // Then by model name
-        // { car: { generation: { generationYear: 'asc' } } }, // Then by generation year
-      ],
-      include: {
-        car: {
-          include: {
-            generation: {
-              include: {
-                model: {
-                  include: {
-                    make: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    return auctions;
-  }
-
   async findById(auctionId: number) {
     const auction = await this.db.auction.findUnique({
       where: { id: auctionId },
@@ -230,7 +189,10 @@ export class AuctionService {
     return auction;
   }
 
-  async getAuctionByUserBids(userId: number, filter: 'all' | 'active' | 'past') {
+  async getAuctionByUserBids(
+    userId: number,
+    filter: 'all' | 'active' | 'past',
+  ) {
     let whereCondition: any = {
       bid: {
         some: {
@@ -256,71 +218,28 @@ export class AuctionService {
             userId: userId,
           },
         },
+       car: {
+        include: {
+          company: true,
+          generation: {
+            include: {
+              model: {
+                include: {
+                  make: true
+                }
+              }
+            }
+          }
+        }
+       }
+      },
+      orderBy: {
+        dateEnd: 'asc',
       },
     });
 
-    if (!auctions || auctions.length === 0) {
-      throw new NotFoundException(`No auctions found for user with ID ${userId}`);
-    }
-
     return auctions;
   }
-
-  // createAuctionCron(auctin: AuctionDto, companyId: number) {
-  //   const cronName = `auction-${auctin.id}`;
-
-  //   const job = new CronJob(auctin.dateEnd, async () => {
-  //     this.logger.log(`Ending auction with ID ${auctin.id}`);
-  //     const bid = await this.db.bid.findFirst({
-  //       where: { auctionId: auctin.id },
-  //       orderBy: { amount: 'desc' },
-  //     });
-
-  //     if (bid) {
-  //       this.changeStatus(auctin.id, AuctionStatus.PLAYED);
-  //       await this.notificationService.create(
-  //         {
-  //           title: `Вы выйграли аукцион ${bid.auctionId}`,
-  //           description: `Ваша ставка: ${bid.amount}`,
-  //           statusInfo: NotificationInfo.SUCCESS,
-  //         },
-  //         bid.userId,
-  //       );
-
-  //       await this.notificationService.create(
-  //         {
-  //           title: `Ваш аукцион был сыгран ${auctin.id}`,
-  //           description: `Выигрышная ставка : ${bid.amount}`,
-  //           statusInfo: NotificationInfo.SUCCESS,
-  //         },
-  //         companyId,
-  //       );
-
-  //       await this.dealService.create({
-  //         auctionId: auctin.id,
-  //         companyId: companyId,
-  //         buyerId: bid.userId,
-  //         price: bid.amount,
-  //       });
-  //     } else {
-  //       this.changeStatus(auctin.id, AuctionStatus.CANCELLED);
-  //       await this.notificationService.create(
-  //         {
-  //           title: `Ваш аукцион не был сыгран ${auctin.id}`,
-  //           description: `Никто не сделал ставку`,
-  //           statusInfo: NotificationInfo.ERROR,
-  //         },
-  //         companyId,
-  //       );
-  //     }
-  //   });
-
-  //   this.schedulerRegistry.addCronJob(cronName, job);
-
-  //   job.start();
-  //   this.changeStatus(auctin.id, AuctionStatus.IN_PROGRESS);
-  //   this.logger.log(`Created cron for auction with ID ${auctin.id}`);
-  // }
 
   private async scheduleAuction(auction: AuctionDto, companyId: number) {
     const cronJobAuctionEnd = new CronJob(
@@ -409,15 +328,10 @@ export class AuctionService {
 
     const currentTime: Date = new Date();
     const auctionEndTime: Date = new Date(auction.dateEnd);
-    console.log(currentTime);
-    console.log(auctionEndTime);
-    console.log(currentTime > auctionEndTime);
+
     return currentTime > auctionEndTime;
   }
 
-  test() {
-    console.log('test');
-  }
   async changeStatus(id: number, event: string) {
     const auctin = await this.findById(id);
 

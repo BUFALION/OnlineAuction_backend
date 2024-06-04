@@ -240,10 +240,10 @@ enum NotificationInfo {
 }
 
 enum DealStatus {
-  CREATED
-  PAID
-  CONFIRMED
-  COMPLETED
+  CREATED // продавец подтвержает сделку
+  PAID // PAID SKIP
+  CONFIRMED // продавец подтвердил сделку оплатить 
+  COMPLETED 
   CANCELLED
 }
 
