@@ -1,5 +1,5 @@
 import { Controller, Delete, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiResponse } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { FavoriteService } from './favorite.service';
 import { SessionInfo } from 'src/auth/session-info.decorator';
@@ -7,6 +7,7 @@ import { GetSessionDto } from 'src/auth/dto/get-session.dto';
 import { FavoriteDto } from './dto/favorite.dto';
 
 @Controller('favorite')
+@ApiTags('favorites')
 export class FavoriteController {
 
     constructor(private readonly favoriteService: FavoriteService){}

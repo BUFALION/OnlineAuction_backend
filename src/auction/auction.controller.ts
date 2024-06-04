@@ -99,11 +99,11 @@ export class AuctionController {
     description: 'Maximum year in the range',
     required: false,
   })
+  @ApiQuery({ name: 'minMillage', description: 'Minimum millage in the range', required: false })
+  @ApiQuery({ name: 'maxMillage', description: 'Maximum millage in the range', required: false })
   @ApiQuery({ name: 'makeId', description: 'Make ID', required: false })
   @ApiQuery({ name: 'modelId', description: 'Model ID', required: false })
   @ApiQuery({ name: 'search', description: 'Searcg', required: false })
-  @ApiQuery({ name: 'minMillage', description: 'Minimum millage in the range', required: false })
-  @ApiQuery({ name: 'maxMillage', description: 'Maximum millage in the range', required: false })
   async getAuctions(
     @Query('page') page: number = 1,
     @Query('perPage') perPage: number = 10,
