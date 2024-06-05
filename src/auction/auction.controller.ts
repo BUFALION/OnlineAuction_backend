@@ -174,4 +174,15 @@ export class AuctionController {
       AuctionStatus.IN_PROGRESS,
     );
   }
+
+  @UseGuards(AuthGuard)
+  @Put(':id/stop')
+  @ApiOkResponse()
+  async stopAuction(@Param('id', ParseIntPipe) id: number) {
+    return await this.auctionService.cancellAuction(id);
+  }
+
+
+
+
 }

@@ -353,4 +353,16 @@ export class AuctionService {
       },
     });
   }
+
+  async cancellAuction(id: number){
+    const auction = await this.findById(id)
+
+    if(auction.status !== AuctionStatus.NOT_PLAYED){
+      throw new BadRequestException(
+        `Auction: ${id} is not in status NOT_PLAYED `,
+      );
+    }
+    this.changeStatus(id, AuctionStatus.CANCELLED )
+    this.schedulerRegistry.getCronJob(`start-auction-${auction.id}`).stop();
+  } 
 }
