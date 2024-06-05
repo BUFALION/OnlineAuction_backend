@@ -177,7 +177,9 @@ export class AuctionController {
 
   @UseGuards(AuthGuard)
   @Put(':id/stop')
-  @ApiOkResponse()
+  @ApiOkResponse({
+    type: AuctionDto
+  })
   async stopAuction(@Param('id', ParseIntPipe) id: number) {
     return await this.auctionService.cancellAuction(id);
   }

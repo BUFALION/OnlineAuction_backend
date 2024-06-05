@@ -11,34 +11,53 @@ export class PaymentStripeService {
   ) {}
 
   async getAllPayments() {
-    return await this.db.payment.findMany()
+    return await this.db.payment.findMany();
   }
 
   async getUserPayments(id: number) {
     return await this.db.payment.findMany({
-      where:{
-        deal:{
-          buyerId: id
-        }
-        
+      where: {
+        deal: {
+          buyerId: id,
+        },
       },
-      include:{
-        deal: true,
-        
-       
-      }
-    })
-  } 
+      include: {
+        deal: {
+          include: {
+            company: true,
+          },
+        },
+      },
+    });
+  }
+  async getCompanyPayments(companyId: number) {
+    return await this.db.payment.findMany({
+      where: {
+        deal: {
+          companyId: companyId,
+        },
+      },
+      include: {
+        deal: {
+          include: {
+            buyer: true,
+          },
+        },
+      },
+    });
+  }
 
   async getPaymentByDealId(dealId: number) {
-    const payment = await this.db.payment.findUnique({where:{
-      dealId: dealId
-    }})
+    const payment = await this.db.payment.findUnique({
+      where: {
+        dealId: dealId,
+      },
+    });
 
     if (!payment) {
       throw new NotFoundException(`Payment with id ${dealId} not found`);
     }
-    return payment
+    return payment;
   }
 
   async createCheck(dealId: number, amount: number, currency: string = 'usd') {
@@ -48,25 +67,25 @@ export class PaymentStripeService {
           price_data: {
             currency: currency,
             product_data: { name: 'Deal Payment' },
-            unit_amount: amount,
+            unit_amount: amount * 100,
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
       metadata: {
-        dealId: dealId.toString()
+        dealId: dealId.toString(),
       },
-     
+
       success_url: 'http://locahost:3000/good',
       cancel_url: 'http://locahost:3000/bad',
     });
- 
+
     await this.db.payment.create({
-        data: {
-            url: session.url,
-            dealId: dealId,
-        }
-    })
+      data: {
+        url: session.url,
+        dealId: dealId,
+      },
+    });
   }
 }

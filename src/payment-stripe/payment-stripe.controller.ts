@@ -1,5 +1,12 @@
 import { InjectStripeClient } from '@golevelup/nestjs-stripe';
-import { Controller, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { PaymentStripeService } from './payment-stripe.service';
@@ -11,44 +18,37 @@ import { PaymentDto } from './dto/payment.dto';
 @ApiTags('payment')
 @Controller('payment-stripe')
 export class PaymentStripeController {
+  constructor(private readonly paymentStripeService: PaymentStripeService) {}
 
+  @Get()
+  async getAllPayments() {
+    return await this.paymentStripeService.getAllPayments();
+  }
 
-    constructor(private readonly paymentStripeService: PaymentStripeService) {}
-
-    @Get()
-    async getAllPayments(){
-      return await this.paymentStripeService.getAllPayments();
-    } 
-
-    @UseGuards(AuthGuard)
-    @ApiOkResponse({
-      type: [PaymentDto]
+  @UseGuards(AuthGuard)
+  @ApiOkResponse({
+    type: [PaymentDto],
   })
-    @Get('user')
-    async getAllUserPayment(@SessionInfo() session: GetSessionDto){
-      return this.paymentStripeService.getUserPayments(session.id)
-    }
-    
+  @Get('user')
+  async getAllUserPayment(@SessionInfo() session: GetSessionDto) {
+    return this.paymentStripeService.getUserPayments(session.id);
+  }
 
-    @Get('deal/:dealId')
-    async GetPaymentByDealId(@Param('dealId', ParseIntPipe) dealId: number){
-      return this.paymentStripeService.getPaymentByDealId(dealId)
-    }
+  @UseGuards(AuthGuard)
+  @ApiOkResponse({
+    type: [PaymentDto],
+  })
+  @Get('company/:companyId')
+  async getAllCompanyPayment(
+    @Param('companyId', ParseIntPipe) companyId: number,
+  ) {
+    return this.paymentStripeService.getCompanyPayments(companyId);
+  }
 
-    // @Post() 
-    // async test() {
+  @Get('deal/:dealId')
+  async GetPaymentByDealId(@Param('dealId', ParseIntPipe) dealId: number) {
+    return this.paymentStripeService.getPaymentByDealId(dealId);
+  }
 
-    //     let dealId = 12
-    //     const session = await this.stripe.checkout.sessions.create({
-    //         line_items: [{ price_data: { currency: 'usd', product_data: { name: 'Deal Payment' }, unit_amount: 1000 }, quantity: 1 }],
-    //         mode: 'payment',
-    //         payment_intent_data: {
-    //           metadata: { dealId: dealId.toString() },
-    //         },
-    //         // customer: deal.buyer.stripeCustomerId, // Предполагается, что у пользователя есть Stripe Customer ID
-    //         success_url: 'http://locahost:3000/good',
-    //         cancel_url: 'http://locahost:3000/bad',
-    //       });
-    //   return session
-    // }
+ 
 }
