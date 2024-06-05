@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger"
+import { Drivetrain } from "@prisma/client"
 import { IsNotEmpty } from "class-validator"
 
 export class CreateCarDto {
@@ -34,4 +35,7 @@ export class CreateCarDto {
     @IsNotEmpty()
     @ApiProperty()
     photos: string[]
+
+    @ApiProperty({enum: Drivetrain})
+    drivetrain: Drivetrain
 }

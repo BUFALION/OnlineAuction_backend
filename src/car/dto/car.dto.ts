@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger"
+import { Drivetrain } from "@prisma/client"
 
 export class CarDto {
     @ApiProperty()
@@ -20,4 +21,7 @@ export class CarDto {
         isArray: true 
     })
     photos: string[]
+
+    @ApiProperty({enum: Drivetrain})
+    drivetrain: Drivetrain
 }

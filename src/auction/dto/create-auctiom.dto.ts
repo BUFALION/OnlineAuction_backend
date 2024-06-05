@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsDateString, IsInt, IsOptional } from "class-validator";
+import { Drivetrain } from "@prisma/client";
+import { IsBoolean, IsDateString, IsEnum, IsInt, IsOptional } from "class-validator";
 
 export class CreateAuctionDto {
   @ApiProperty({
@@ -31,4 +32,6 @@ export class CreateAuctionDto {
   @IsBoolean()
   @IsOptional()
   offer?: boolean;
+
+
 }

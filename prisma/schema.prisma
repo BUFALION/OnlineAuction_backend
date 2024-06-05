@@ -86,6 +86,7 @@ model Car {
   generation    Generation   @relation(fields: [generationId], references: [id])
   descriptionId Int   @unique
   description   Description  @relation(fields: [descriptionId], references: [id])
+  drivetrain    Drivetrain
 
   auction       Auction?
 }
@@ -252,4 +253,11 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+enum Drivetrain {
+  FWD 
+  RWD  
+  AWD 
+  FOURWD  
 }
