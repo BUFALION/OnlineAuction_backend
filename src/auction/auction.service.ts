@@ -365,4 +365,6 @@ export class AuctionService {
     this.changeStatus(id, AuctionStatus.CANCELLED )
     this.schedulerRegistry.getCronJob(`start-auction-${auction.id}`).stop();
   } 
+
+
 }
