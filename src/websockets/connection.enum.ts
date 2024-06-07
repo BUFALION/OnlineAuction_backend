@@ -5,4 +5,5 @@ export enum Connection {
   auctionError = 'auctionError',
   auctionStart = 'auctionStart',
   auctionEnd = 'auctionEnd',
+  auctionCancel = 'auctionCancel'
 }

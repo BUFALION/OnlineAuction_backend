@@ -51,8 +51,8 @@ import * as redisStore from 'cache-manager-redis-store'
     ScheduleModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
-      store: redisStore,
-      url: process.env.REDIS_URL
+      // store: redisStore,
+      // url: process.env.REDIS_URL
     }),
     
     EventEmitterModule.forRoot({

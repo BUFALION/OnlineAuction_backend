@@ -255,10 +255,12 @@ export class AuctionService {
       `start-auction-${auction.id}`,
       cronJobAuctionStart,
     );
+    this.logger.log(`Cron job 'start' for auction ${auction.id} created`);
     this.schedulerRegistry.addCronJob(
       `end-auction-${auction.id}`,
       cronJobAuctionEnd,
     );
+    this.logger.log(`Cron job 'end' for auction ${auction.id} created`);
 
     cronJobAuctionStart.start();
   }
@@ -329,7 +331,7 @@ export class AuctionService {
     const currentTime: Date = new Date();
     const auctionEndTime: Date = new Date(auction.dateEnd);
 
-    return currentTime > auctionEndTime;
+    return currentTime > auctionEndTime && auction.status !== AuctionStatus.IN_PROGRESS;
   }
 
   async changeStatus(id: number, event: string) {
@@ -364,7 +366,7 @@ export class AuctionService {
     }
     this.changeStatus(id, AuctionStatus.CANCELLED )
     this.schedulerRegistry.getCronJob(`start-auction-${auction.id}`).stop();
+    this.logger.log(`Cron job for auction  with ID ${auction.id} stoped`);
+    this.eventEmitter.emit('auction.cancel', auction);
   } 
-
-
 }

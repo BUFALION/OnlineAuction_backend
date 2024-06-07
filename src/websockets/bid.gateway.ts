@@ -85,6 +85,8 @@ export class BidGateway implements OnGatewayInit {
       return client.emit('auctionError', { error: 'Аукцион уже закончился' });
     }
 
+     
+
     const lastBid = await this.bidService.getLastHighestBid(
       bidCreateWsDto.auctionId,
     );
@@ -115,10 +117,13 @@ export class BidGateway implements OnGatewayInit {
     this.eventEmitter.on('bid.updated',(data: BidDto) => this.emitAuctionUpdate(data))
     this.eventEmitter.on('auction.start', (auction: Auction) => this.emitAuctionStart(auction))
     this.eventEmitter.on('auction.end', (auction: Auction) => this.emitAuctionEnd(auction))
+    this.eventEmitter.on('auction.cancel', (auction: Auction) => this.emitAuctionCancel(auction))
   }
 
   private emitAuctionStart = (auction: Auction) => this.server.to(auction.id.toString()).emit(Connection.auctionStart);
   private emitAuctionEnd = (auction: Auction) => this.server.to(auction.id.toString()).emit(Connection.auctionEnd);
+  private emitAuctionCancel = (auction: Auction) => this.server.to(auction.id.toString()).emit(Connection.auctionCancel);
+
 
   private async emitAuctionUpdate(bid: BidDto) {
     const result: BidCreateResponseWsDto = {
