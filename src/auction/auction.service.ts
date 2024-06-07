@@ -331,7 +331,7 @@ export class AuctionService {
     const currentTime: Date = new Date();
     const auctionEndTime: Date = new Date(auction.dateEnd);
 
-    return currentTime > auctionEndTime && auction.status !== AuctionStatus.IN_PROGRESS;
+    return currentTime > auctionEndTime || auction.status !== AuctionStatus.IN_PROGRESS;
   }
 
   async changeStatus(id: number, event: string) {
