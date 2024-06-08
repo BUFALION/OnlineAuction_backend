@@ -24,7 +24,7 @@ import { Auction, NotificationInfo } from '@prisma/client';
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:4200',
+    origin: true,
     credentials: true,
   },
 })
