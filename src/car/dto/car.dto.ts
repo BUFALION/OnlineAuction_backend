@@ -22,6 +22,9 @@ export class CarDto {
     })
     photos: string[]
 
+    @ApiProperty()
+    type: string
+
     @ApiProperty({enum: Drivetrain})
     drivetrain: Drivetrain
 }

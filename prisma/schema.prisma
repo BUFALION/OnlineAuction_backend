@@ -87,7 +87,7 @@ model Car {
   descriptionId Int   @unique
   description   Description  @relation(fields: [descriptionId], references: [id])
   drivetrain    Drivetrain
-
+  type          String
   auction       Auction?
 }
 

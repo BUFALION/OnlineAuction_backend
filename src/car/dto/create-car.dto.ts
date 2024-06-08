@@ -31,6 +31,11 @@ export class CreateCarDto {
     @ApiProperty()
     @IsNotEmpty()
     engine: string
+
+    @ApiProperty()
+    @IsNotEmpty()
+    type: string
+    
     
     @IsNotEmpty()
     @ApiProperty()
