@@ -91,6 +91,7 @@ export class BidService {
   }
 
   public async getLastHighestBid(auctionId: number) {
+
     const bid = await this.db.bid.findFirst({
       where: { auctionId },
       orderBy: { amount: 'desc' },

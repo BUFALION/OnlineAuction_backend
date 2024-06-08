@@ -64,6 +64,7 @@ export class BidGateway implements OnGatewayInit {
       userId: await this.bidService.getMaxBidUserId(
         parseInt(subscribeToAuctionDto.auctionId),
       ),
+
     };
     this.server
       .to(subscribeToAuctionDto.auctionId)
