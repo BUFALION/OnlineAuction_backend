@@ -61,6 +61,9 @@ export class BidGateway implements OnGatewayInit {
       countBids: await this.bidService.getCountBidsByAuction(
         parseInt(subscribeToAuctionDto.auctionId),
       ),
+      userId: await this.bidService.getMaxBidUserId(
+        parseInt(subscribeToAuctionDto.auctionId),
+      ),
     };
     this.server
       .to(subscribeToAuctionDto.auctionId)
@@ -74,30 +77,30 @@ export class BidGateway implements OnGatewayInit {
     @MessageBody() bidCreateWsDto: BidCreateWsDto,
     @SessionInfoWs() session: GetSessionDto,
   ) {
-
     if (!client.rooms.has(bidCreateWsDto.auctionId.toString())) {
       return client.emit('auctionError', {
         error: 'Необходимо сначала подписаться на аукцион',
       });
     }
 
-    if (await this.auctionService.checkAuctionExpiration(bidCreateWsDto.auctionId) === true){
+    if (
+      (await this.auctionService.checkAuctionExpiration(
+        bidCreateWsDto.auctionId,
+      )) === true
+    ) {
       return client.emit('auctionError', { error: 'Аукцион уже закончился' });
     }
-
-     
 
     const lastBid = await this.bidService.getLastHighestBid(
       bidCreateWsDto.auctionId,
     );
 
     if (lastBid && lastBid.userId !== session.id) {
-
       const notification = await this.notificationService.create(
         {
           title: `Ваша ставка на аукцион перебита ${lastBid.auctionId}`,
           description: `Новая ставка: ${bidCreateWsDto.amount}`,
-          statusInfo: NotificationInfo.WARNING
+          statusInfo: NotificationInfo.WARNING,
         },
         lastBid.userId,
       );
@@ -109,27 +112,39 @@ export class BidGateway implements OnGatewayInit {
       session.id,
     );
 
-    
     // await this.emitAuctionUpdate(bidCreateWsDto.auctionId);
   }
 
   private listenEvent() {
-    this.eventEmitter.on('bid.updated',(data: BidDto) => this.emitAuctionUpdate(data))
-    this.eventEmitter.on('auction.start', (auction: Auction) => this.emitAuctionStart(auction))
-    this.eventEmitter.on('auction.end', (auction: Auction) => this.emitAuctionEnd(auction))
-    this.eventEmitter.on('auction.cancel', (auction: Auction) => this.emitAuctionCancel(auction))
+    this.eventEmitter.on('bid.updated', (data: BidDto) =>
+      this.emitAuctionUpdate(data),
+    );
+    this.eventEmitter.on('auction.start', (auction: Auction) =>
+      this.emitAuctionStart(auction),
+    );
+    this.eventEmitter.on('auction.end', (auction: Auction) =>
+      this.emitAuctionEnd(auction),
+    );
+    this.eventEmitter.on('auction.cancel', (auction: Auction) =>
+      this.emitAuctionCancel(auction),
+    );
   }
 
-  private emitAuctionStart = (auction: Auction) => this.server.to(auction.id.toString()).emit(Connection.auctionStart);
-  private emitAuctionEnd = (auction: Auction) => this.server.to(auction.id.toString()).emit(Connection.auctionEnd);
-  private emitAuctionCancel = (auction: Auction) => this.server.to(auction.id.toString()).emit(Connection.auctionCancel);
-
+  private emitAuctionStart = (auction: Auction) =>
+    this.server.to(auction.id.toString()).emit(Connection.auctionStart);
+  private emitAuctionEnd = (auction: Auction) =>
+    this.server.to(auction.id.toString()).emit(Connection.auctionEnd);
+  private emitAuctionCancel = (auction: Auction) =>
+    this.server.to(auction.id.toString()).emit(Connection.auctionCancel);
 
   private async emitAuctionUpdate(bid: BidDto) {
     const result: BidCreateResponseWsDto = {
       currentBid: await this.bidService.getMaxBidByAuction(bid.auctionId),
       countBids: await this.bidService.getCountBidsByAuction(bid.auctionId),
+      userId: bid.userId,
     };
-    this.server.to(bid.auctionId.toString()).emit(Connection.auctionUpdate, result);
+    this.server
+      .to(bid.auctionId.toString())
+      .emit(Connection.auctionUpdate, result);
   }
 }
