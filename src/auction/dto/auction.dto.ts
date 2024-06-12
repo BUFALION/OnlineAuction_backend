@@ -20,9 +20,9 @@ export class AuctionDto {
   @IsOptional()
   startPrice?: number;
   
-  @ApiProperty()
-  @IsOptional()
-  offer?: boolean;
+  // @ApiProperty()
+  // @IsOptional()
+  // offer?: boolean;
   
   @ApiProperty()
   createdAt: Date;

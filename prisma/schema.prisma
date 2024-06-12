@@ -107,7 +107,6 @@ model Auction {
   dateStart  DateTime @map("date_start")
   dateEnd    DateTime @map("date_end")
   startPrice Int?     @map("start_price") @default(0)
-  offer      Boolean? @default(false)
   createdAt  DateTime @default(now()) @map("created_at")
   status     AuctionStatus @default(NOT_PLAYED)
   favorite   Favorite[]

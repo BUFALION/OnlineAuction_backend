@@ -25,13 +25,13 @@ export class CreateAuctionDto {
   @IsOptional()
   startPrice?: number;
 
-  @ApiProperty({
-    example: true,
-    description: 'Indicates whether offers are allowed on the auction.'
-  })
-  @IsBoolean()
-  @IsOptional()
-  offer?: boolean;
+  // @ApiProperty({
+  //   example: true,
+  //   description: 'Indicates whether offers are allowed on the auction.'
+  // })
+  // @IsBoolean()
+  // @IsOptional()
+  // offer?: boolean;
 
 
 }
