@@ -16,7 +16,20 @@ export class CarService {
   ) {}
 
   async getCarById(carId: number) {
-    const car = await this.db.car.findUnique({ where: { id: carId } });
+    const car = await this.db.car.findUnique({
+      where: { id: carId },
+      include: {
+        generation: {
+          include: {
+            model: {
+              include: {
+                make: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (!car) {
       throw new NotFoundException(`Car with id ${carId} not found`);
@@ -31,7 +44,6 @@ export class CarService {
       },
     });
     return cars;
-   
   }
 
   async getCars() {
@@ -42,15 +54,12 @@ export class CarService {
     return await this.db.car.create({
       data: {
         ...carCreateDto,
-        companyId: companyId
-        
+        companyId: companyId,
       },
     });
   }
   updateCar() {}
   deleteCar() {}
-
-
 
   async isCarOwner(carId: number, companyId: number): Promise<boolean> {
     const car = await this.getCarById(carId);
@@ -66,7 +75,9 @@ export class CarService {
       formData.append('image', photo.buffer.toString('base64'));
 
       try {
-        this.logger.log(`Uploading photo for car ID: ${carId} to external service`);
+        this.logger.log(
+          `Uploading photo for car ID: ${carId} to external service`,
+        );
         const { data } = await firstValueFrom(
           this.httpService
             .post(
@@ -75,7 +86,10 @@ export class CarService {
             )
             .pipe(
               catchError((error) => {
-                this.logger.error('Error uploading to external service', JSON.stringify(error));
+                this.logger.error(
+                  'Error uploading to external service',
+                  JSON.stringify(error),
+                );
                 throw error;
               }),
             ),
@@ -83,7 +97,10 @@ export class CarService {
         imageUrls.push(data.data.url);
         this.logger.log(`Photo uploaded successfully for car ID: ${carId}`);
       } catch (error) {
-        this.logger.error(`Failed to upload photo for car ID: ${carId}`, error.stack);
+        this.logger.error(
+          `Failed to upload photo for car ID: ${carId}`,
+          error.stack,
+        );
         throw error;
       }
     }
@@ -96,7 +113,10 @@ export class CarService {
       this.logger.log(`Database update successful for car ID: ${carId}`);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to update database for car ID: ${carId}`, error.stack);
+      this.logger.error(
+        `Failed to update database for car ID: ${carId}`,
+        error.stack,
+      );
       throw error;
     }
   }
