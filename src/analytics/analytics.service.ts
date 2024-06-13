@@ -131,7 +131,7 @@ export class AnalyticsService {
       dateRanges: [
         {
           startDate: '30daysAgo',
-          endDate: 'yesterday',
+          endDate: 'today',
         },
       ],
       dimensions: [
