@@ -60,6 +60,9 @@ export class ReviewService {
           companyId: companyId,
         },
       },
+      include: {
+        reviewr: true
+      }
     });
 
     return reviews
